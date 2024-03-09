@@ -1,1 +1,3 @@
-TO BE OR NOT TO BE
+Kodowanie Huffmana
+Kodowanie Huffmana – jedna z najprostszych i łatwych w implementacji metod kompresji bezstratnej. 
+Została opracowana w 1952 roku przez Amerykanina Davida Huffmana. Wikipedia1
