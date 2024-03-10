@@ -12,8 +12,8 @@ namespace zad3
     [Serializable]
     class HuffmanData
     {
-        public HuffmanNode TreeRoot { get; set; }
-        public string EncodedText { get; set; }
+        public byte[] EncodedText { get; set; }
+        public byte[] TreeData { get; set; }
     }
 
     [Serializable]
@@ -66,7 +66,21 @@ namespace zad3
             Traverse(root, "", codeDictionary);
             string encodedText = string.Concat(text.Select(c => codeDictionary[c]));
 
-            return new HuffmanData { TreeRoot = root, EncodedText = encodedText };
+            // Convert encoded text to bytes
+            byte[] encodedBytes = new byte[(encodedText.Length + 7) / 8];
+            for (int i = 0; i < encodedText.Length; i += 8)
+            {
+                string byteString = encodedText.Substring(i, Math.Min(8, encodedText.Length - i)).PadRight(8, '0');
+                encodedBytes[i / 8] = Convert.ToByte(byteString, 2);
+            }
+
+            // Convert Huffman tree to bytes
+            MemoryStream treeStream = new MemoryStream();
+            BinaryFormatter formatter = new BinaryFormatter();
+            formatter.Serialize(treeStream, root);
+            byte[] treeBytes = treeStream.ToArray();
+
+            return new HuffmanData { EncodedText = encodedBytes, TreeData = treeBytes };
         }
 
         private static void Traverse(HuffmanNode node, string code, Dictionary<char, string> codeDictionary)
@@ -81,26 +95,35 @@ namespace zad3
             Traverse(node.Right, code + "1", codeDictionary);
         }
 
-        public static string Decode(HuffmanData data)
+        public static string Decode(byte[] encodedBytes, byte[] treeBytes)
         {
-            HuffmanNode current = data.TreeRoot;
-            string decodedText = "";
+            // Deserialize Huffman tree
+            BinaryFormatter formatter = new BinaryFormatter();
+            MemoryStream treeStream = new MemoryStream(treeBytes);
+            root = (HuffmanNode)formatter.Deserialize(treeStream);
 
-            foreach (char bit in data.EncodedText)
+            // Decode text
+            StringBuilder decodedText = new StringBuilder();
+            HuffmanNode current = root;
+            foreach (byte b in encodedBytes)
             {
-                if (bit == '0')
-                    current = current.Left;
-                else if (bit == '1')
-                    current = current.Right;
-
-                if (current.Left == null && current.Right == null)
+                for (int i = 7; i >= 0; i--)
                 {
-                    decodedText += current.Symbol;
-                    current = data.TreeRoot;
+                    int bit = (b >> i) & 1;
+                    if (bit == 0)
+                        current = current.Left;
+                    else if (bit == 1)
+                        current = current.Right;
+
+                    if (current.Left == null && current.Right == null)
+                    {
+                        decodedText.Append(current.Symbol);
+                        current = root;
+                    }
                 }
             }
 
-            return decodedText;
+            return decodedText.ToString();
         }
     }
 
@@ -112,8 +135,10 @@ namespace zad3
             {
                 Console.WriteLine("Wybierz operację:");
                 Console.WriteLine("1. Kodowanie");
-                Console.WriteLine("2. Dekodowanie");
-                Console.WriteLine("3. Wyjście");
+                Console.WriteLine("2. Przesłanie skompresowanego pliku");
+                Console.WriteLine("3. Dekodowanie");
+                Console.WriteLine("4. Pokaż autorów");
+                Console.WriteLine("5. Wyjście");
                 Console.Write("Twój wybór: ");
 
                 string choice = Console.ReadLine();
@@ -124,9 +149,15 @@ namespace zad3
                         EncodeText();
                         break;
                     case "2":
-                        DecodeText();
+                        SendCompressedFile();
                         break;
                     case "3":
+                        DecodeText();
+                        break;
+                    case "4":
+                        ShowAuthors();
+                        break;
+                    case "5":
                         Environment.Exit(0);
                         break;
                     default:
@@ -147,10 +178,18 @@ namespace zad3
                 Console.WriteLine("Tekst przed kodowaniem: " + text);
 
                 HuffmanData huffmanData = Huffman.Encode(text);
-                Console.WriteLine("Tekst po zakodowaniu: " + huffmanData.EncodedText);
 
-                // Wysyłanie danych przez gniazda sieciowe
-                SendDataOverSocket(huffmanData);
+                // Zapisanie zakodowanego tekstu i drzewa do pliku
+                using (FileStream fileStream = new FileStream("../../compressed.bin", FileMode.Create))
+                using (BinaryWriter writer = new BinaryWriter(fileStream))
+                {
+                    writer.Write(huffmanData.EncodedText.Length); // Zapisz długość zakodowanego tekstu
+                    writer.Write(huffmanData.EncodedText); // Zapisz zakodowany tekst
+                    writer.Write(huffmanData.TreeData.Length); // Zapisz długość danych drzewa
+                    writer.Write(huffmanData.TreeData); // Zapisz dane drzewa
+                }
+
+                Console.WriteLine("Dane zakodowane i zapisane do pliku 'compressed.bin'.");
             }
             catch (Exception ex)
             {
@@ -158,11 +197,18 @@ namespace zad3
             }
         }
 
-        static void SendDataOverSocket(HuffmanData data)
+        static void SendCompressedFile()
         {
+            Console.WriteLine("Podaj adres IP docelowego komputera:");
+            string ipAddressString = Console.ReadLine();
+
             try
             {
-                IPAddress ipAddress = IPAddress.Parse("192.168.0.2");
+                // Odczytanie zakodowanego pliku
+                byte[] compressedFileData = File.ReadAllBytes("../../compressed.bin");
+
+                // Utworzenie połączenia z docelowym komputerem i przesłanie pliku
+                IPAddress ipAddress = IPAddress.Parse(ipAddressString);
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
 
                 using (Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
@@ -171,38 +217,39 @@ namespace zad3
 
                     using (NetworkStream networkStream = new NetworkStream(sender))
                     {
-                        BinaryFormatter formatter = new BinaryFormatter();
-                        formatter.Serialize(networkStream, data);
+                        networkStream.Write(compressedFileData, 0, compressedFileData.Length);
                     }
 
-                    Console.WriteLine("Dane wysłane pomyślnie.");
+                    Console.WriteLine("Skompresowany plik wysłany pomyślnie.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Błąd podczas wysyłania danych: " + ex.Message);
+                Console.WriteLine("Błąd podczas przesyłania pliku: " + ex.Message);
             }
         }
-
 
         static void DecodeText()
         {
             try
             {
-                // Nasłuchiwanie na gnieździe
+                // Odbiór skompresowanego pliku
                 TcpListener listener = new TcpListener(IPAddress.Any, 11000);
                 listener.Start();
 
                 Console.WriteLine("Oczekiwanie na połączenie...");
 
-                // Odczytanie danych
                 using (TcpClient client = listener.AcceptTcpClient())
                 using (NetworkStream stream = client.GetStream())
+                using (BinaryReader reader = new BinaryReader(stream))
                 {
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    HuffmanData receivedData = (HuffmanData)formatter.Deserialize(stream);
+                    int encodedTextLength = reader.ReadInt32(); // Odczytaj długość zakodowanego tekstu
+                    byte[] encodedText = reader.ReadBytes(encodedTextLength); // Odczytaj zakodowany tekst
+                    int treeDataLength = reader.ReadInt32(); // Odczytaj długość danych drzewa
+                    byte[] treeData = reader.ReadBytes(treeDataLength); // Odczytaj dane drzewa
 
-                    string decodedText = Huffman.Decode(receivedData);
+                    // Dekompresja pliku
+                    string decodedText = Huffman.Decode(encodedText, treeData);
                     Console.WriteLine("Odkodowany tekst: " + decodedText);
 
                     Console.WriteLine("Podaj nazwę pliku do zapisania odkodowanego tekstu:");
@@ -219,6 +266,13 @@ namespace zad3
             {
                 Console.WriteLine("Błąd: " + ex.Message);
             }
+        }
+
+        static void ShowAuthors()
+        {
+            Console.WriteLine("Autorzy programu:");
+            Console.WriteLine("Kamil Kaniera 247689");
+            Console.WriteLine("Krzysztof Purgat 247771");
         }
     }
 }
