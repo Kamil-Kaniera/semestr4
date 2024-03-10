@@ -2,75 +2,63 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# Schemat Hornera
+def horner_scheme(x, coefficients, length):
+    result = coefficients[0]
+
+    for i in range(1, length):
+        result = result * x + coefficients[i]
+
+    return result
+
+
 # Funkcje do wyboru
 def polynomial(x):
-    return 5 * x ** 4 - x ** 2 - 7 * x + 4
+    return horner_scheme(x, [1, -2, -5, 6], 4)
 
 
 def trigonometric(x):
-    return (np.sin(2 * x) + 0.5)
+    return np.sin((2 * x) - 0.5)
 
 
 def exponential(x):
-    return 2 ** x - 7
+    return 2 ** (x - 2) - 4
 
 
 def composition(x):
-    return np.sin(3 ** x)
+    return np.sin((2 * np.pi) ** x)
 
 
 # Metoda bisekcji
 def bisection_method(f, left, right, epsilon, max_iterations):
     middle = 0
+    current_iterations = 0
 
-    # Wariant z epsilonem
-    if epsilon is not None:
-        while abs(middle - (left + right) / 2.0) >= epsilon:
-            middle = (left + right) / 2.0
-            if f(left) * f(middle) > 0:
-                left = middle
-            elif f(left) * f(middle) <= 0:
-                right = middle
-        return middle
-
-    # Wariant z liczbą iteracji
-    elif max_iterations is not None:
-        current_iteration = 0
-        while current_iteration <= max_iterations:
-            current_iteration += 1
-            middle = (left + right) / 2.0
-            if f(left) * f(middle) > 0:
-                left = middle
-            elif f(left) * f(middle) <= 0:
-                right = middle
-        return middle
+    while ((epsilon is not None and abs(right - left) >= epsilon) or
+           (max_iterations is not None and current_iterations < max_iterations)):
+        current_iterations += 1
+        middle = (left + right) / 2.0
+        if f(left) * f(middle) > 0:
+            left = middle
+        else:
+            right = middle
+    return [middle, current_iterations]
 
 
 # Reguła falsi
 def falsi_method(f, left, right, epsilon, max_iterations):
     middle = 0
+    current_iterations = 0
 
-    # Wariant z epsilonem
-    if epsilon is not None:
-        while abs(middle - (left + right) / 2.0) >= epsilon:
-            middle = left - (f(left) / (f(right) - f(left))) * (right - left)
-            if f(left) * f(middle) > 0:
-                left = middle
-            elif f(left) * f(middle) <= 0:
-                right = middle
-        return middle
-
-    # Wariant z liczbą iteracji
-    elif max_iterations is not None:
-        current_iteration = 0
-        while current_iteration <= max_iterations:
-            current_iteration += 1
-            middle = left - (f(left) / (f(right) - f(left))) * (right - left)
-            if f(left) * f(middle) > 0:
-                left = middle
-            elif f(left) * f(middle) <= 0:
-                right = middle
-        return middle
+    while ((epsilon is not None and abs(right - left) >= epsilon) or
+           (max_iterations is not None and current_iterations < max_iterations)):
+        current_iterations += 1
+        middle = left - (f(left) / (f(right) - f(left))) * (right - left)
+        if f(left) * f(middle) > 0:
+            left = middle
+        else:
+            right = middle
+    return [middle, current_iterations]
 
 
 # Funkcja do rysowania wykresu
@@ -90,10 +78,10 @@ def plot_function(f, a, b, bisection_zero, falsi_zero):
 
 # Wybór funkcji
 print("Wybierz rodzaj funkcji: ")
-print("1. Wielomian: 5x^4 - x^2 - 7x + 4")
-print("2. Trygonometryczna: sin(2x) + 1/2")
-print("3. Wykładnicza: 2^x - 7")
-print("4. Złożenie: sin(3^x)")
+print("1. Wielomian: x^3 - 2x^2 - 5x + 6")
+print("2. Trygonometryczna: sin(2x - 1/2)")
+print("3. Wykładnicza: 2^(x-2) - 4")
+print("4. Złożenie: sin(2π^x)")
 
 function_choice = int(input("Twój wybór: "))
 
@@ -137,6 +125,6 @@ zero_of_function_bisection = bisection_method(function, a, b, epsilon, max_itera
 zero_of_function_falsi = falsi_method(function, a, b, epsilon, max_iterations)
 
 print("Miejsca zerowe wybranej funkcji:"
-      "\nMetoda bisekcji: ", zero_of_function_bisection,
-      "\nMetioda falsi: ", zero_of_function_falsi)
-plot_function(function, a, b, zero_of_function_bisection, zero_of_function_falsi)
+      "\nMetoda bisekcji: ", zero_of_function_bisection[0], ", liczba iteracji: ", zero_of_function_bisection[1],
+      "\nMetioda falsi: ", zero_of_function_falsi[0], ", liczba iteracji: ", zero_of_function_falsi[1])
+plot_function(function, a, b, zero_of_function_bisection[0], zero_of_function_falsi[0])
