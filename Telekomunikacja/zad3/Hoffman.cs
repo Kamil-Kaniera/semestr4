@@ -41,6 +41,17 @@ namespace zad3
                 .OrderByDescending(g => g.Count())
                 .ToDictionary(g => g.Key, g => g.Count());
 
+            // Jeśli tekst zawiera tylko jeden rodzaj znaku, zapisujemy go jako "0" w słowniku kodowania
+            if (frequencies.Count == 1)
+            {
+                char singleChar = frequencies.Keys.First();
+                Dictionary<char, string> codeDictionary1 = new Dictionary<char, string> { { singleChar, "0" } };
+
+                // Konwersja tekstu na tablicę bajtów
+                byte[] encodedBytes1 = new byte[] { (byte)singleChar };
+                return new HuffmanData { EncodedText = encodedBytes1, OriginalTextLength = text.Length };
+            }
+            
             // Utworzenie węzłów dla każdego znaku
             List<HuffmanNode> nodes = frequencies.Select(kv => new HuffmanNode { Symbol = kv.Key, Frequency = kv.Value }).ToList();
 
@@ -239,8 +250,16 @@ namespace zad3
                     writer.Write(huffmanData.OriginalTextLength); // Zapisz długość oryginalnego tekstu
                     writer.Write(huffmanData.EncodedText.Length); // Zapisz długość zakodowanego tekstu
                     writer.Write(huffmanData.EncodedText); // Zapisz zakodowany tekst
-                    writer.Write(huffmanData.TreeData.Length); // Zapisz długość danych drzewa
-                    writer.Write(huffmanData.TreeData); // Zapisz dane drzewa
+                    if (huffmanData.EncodedText.Length == 1)
+                    {
+                        
+                    }
+                    else
+                    {
+                        writer.Write(huffmanData.TreeData.Length); // Zapisz długość danych drzewa
+                        writer.Write(huffmanData.TreeData); // Zapisz dane drzewa
+                    }
+                    
                 }
 
                 Console.WriteLine("Dane zakodowane i zapisane do pliku 'compressed.bin'.");
@@ -303,19 +322,36 @@ namespace zad3
                     int originalTextLength = reader.ReadInt32(); // Odczytaj długość oryginalnego tekstu
                     int encodedTextLength = reader.ReadInt32(); // Odczytaj długość zakodowanego tekstu
                     byte[] encodedText = reader.ReadBytes(encodedTextLength); // Odczytaj zakodowany tekst
-                    int treeDataLength = reader.ReadInt32(); // Odczytaj długość danych drzewa
-                    byte[] treeData = reader.ReadBytes(treeDataLength); // Odczytaj dane drzewa
+                    
+                    // Dekompresja pliku (jeśli jest 1 rodzaj znaku)
+                    if (encodedText.Length == 1)
+                    {
+                        string decodedText = new string((char)encodedText[0], originalTextLength);
+                        Console.WriteLine("Odkodowany tekst: " + decodedText);
 
-                    // Dekompresja pliku
-                    string decodedText = Huffman.Decode(encodedText, treeData, originalTextLength);
-                    Console.WriteLine("Odkodowany tekst: " + decodedText);
+                        Console.WriteLine("Podaj nazwę pliku do zapisania odkodowanego tekstu:");
+                        string fileName = Console.ReadLine();
 
-                    Console.WriteLine("Podaj nazwę pliku do zapisania odkodowanego tekstu:");
-                    string fileName = Console.ReadLine();
+                        File.WriteAllText("../../" + fileName, decodedText);
 
-                    File.WriteAllText("../../" + fileName, decodedText);
+                        Console.WriteLine("Plik zapisany pomyślnie.");
+                    }
+                    else
+                    {
+                        int treeDataLength = reader.ReadInt32(); // Odczytaj długość danych drzewa
+                        byte[] treeData = reader.ReadBytes(treeDataLength); // Odczytaj dane drzewa
+                        
+                        string decodedText = Huffman.Decode(encodedText, treeData, originalTextLength);
+                        Console.WriteLine("Odkodowany tekst: " + decodedText);
 
-                    Console.WriteLine("Plik zapisany pomyślnie.");
+                        Console.WriteLine("Podaj nazwę pliku do zapisania odkodowanego tekstu:");
+                        string fileName = Console.ReadLine();
+
+                        File.WriteAllText("../../" + fileName, decodedText);
+
+                        Console.WriteLine("Plik zapisany pomyślnie.");
+                    } 
+                   
                 }
 
                 listener.Stop();
