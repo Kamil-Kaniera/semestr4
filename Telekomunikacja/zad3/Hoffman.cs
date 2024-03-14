@@ -238,7 +238,7 @@ namespace zad3
 
             try
             {
-                string text = File.ReadAllText("../../" + fileName);
+                string text = File.ReadAllText("../../" + fileName, Encoding.UTF8);
                 Console.WriteLine("Tekst przed kodowaniem: " + text);
 
                 HuffmanData huffmanData = Huffman.Encode(text);
