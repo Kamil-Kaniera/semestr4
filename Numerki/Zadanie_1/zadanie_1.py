@@ -1,15 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # Schemat Hornera
-def horner_scheme(x, coefficients, length):
-    result = coefficients[0]
+from horner import horner_scheme
 
-    for i in range(1, length):
-        result = result * x + coefficients[i]
+# Metoda bisekcji
+from bisection import bisection_method
 
-    return result
+# Reguła falsi
+from falsi import falsi_method
 
 
 # Funkcje do wyboru
@@ -29,45 +28,14 @@ def composition(x):
     return np.sin((2 * np.pi) ** x)
 
 
-# Metoda bisekcji
-def bisection_method(f, left, right, epsilon, max_iterations):
-    middle = 0
-    current_iterations = 0
-
-    while ((epsilon is not None and abs(right - left) >= epsilon) or
-           (max_iterations is not None and current_iterations < max_iterations)):
-        current_iterations += 1
-        middle = (left + right) / 2.0
-        if f(left) * f(middle) > 0:
-            left = middle
-        else:
-            right = middle
-    return [middle, current_iterations]
-
-
-# Reguła falsi
-def falsi_method(f, left, right, epsilon, max_iterations):
-    middle = 0
-    current_iterations = 0
-
-    while ((epsilon is not None and abs(right - left) >= epsilon) or
-           (max_iterations is not None and current_iterations < max_iterations)):
-        current_iterations += 1
-        middle = left - (f(left) / (f(right) - f(left))) * (right - left)
-        if f(left) * f(middle) > 0:
-            left = middle
-        else:
-            right = middle
-    return [middle, current_iterations]
-
-
 # Funkcja do rysowania wykresu
 def plot_function(f, a, b, bisection_zero, falsi_zero):
     x = np.linspace(a, b, 400)
     y = f(x)
     plt.plot(x, y, label="Funkcja")
-    plt.scatter(bisection_zero, f(bisection_zero), color='red', label="Miejsce zerowe metodą bisekcji")
-    plt.scatter(falsi_zero, f(falsi_zero), color='green', label="Miejsce zerowe metodą falsi")
+    if bisection_zero is not None and falsi_zero is not None:
+        plt.scatter(bisection_zero, f(bisection_zero), color='red', label="Miejsce zerowe metodą bisekcji")
+        plt.scatter(falsi_zero, f(falsi_zero), color='green', label="Miejsce zerowe metodą falsi")
     plt.xlabel('x')
     plt.ylabel('f(x)')
     plt.title('Wykres funkcji')
@@ -102,6 +70,9 @@ elif function_choice == 3:
     function = exponential
 elif function_choice == 4:
     function = composition
+
+plot_function(function, -10, 10, None, None)
+
 
 # Ustalenie parametrów
 a = float(input("Podaj początek przedziału: "))
