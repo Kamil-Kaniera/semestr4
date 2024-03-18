@@ -2,7 +2,7 @@ def falsi_method(f, left, right, epsilon, max_iterations):
     middle = 0
     current_iterations = 0
 
-    while ((epsilon is not None and (abs(middle - ((left + right) / 2.0)) >= epsilon)) or
+    while ((epsilon is not None and abs(middle - left - (f(left) / (f(right) - f(left))) * (right - left)) >= epsilon) or
            (max_iterations is not None and current_iterations < max_iterations)):
         current_iterations += 1
         middle = left - (f(left) / (f(right) - f(left))) * (right - left)
