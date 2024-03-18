@@ -49,7 +49,7 @@ print("Wybierz rodzaj funkcji: ")
 print("1. Wielomian: x^3 - 2x^2 - 5x + 6")
 print("2. Trygonometryczna: sin(2x - 1/2)")
 print("3. Wykładnicza: 2^(x-2) - 4")
-print("4. Złożenie: sin(2π^x)")
+print("4. Złożenie: sin((2π)^x)")
 
 function_choice = int(input("Twój wybór: "))
 
