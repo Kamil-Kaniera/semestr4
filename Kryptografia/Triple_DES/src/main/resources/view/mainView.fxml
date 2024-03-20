@@ -78,11 +78,11 @@
       <Button layoutX="438.0" layoutY="516.0" mnemonicParsing="false" onAction="#onSaveButtonClick" text="Zapisz" />
       <Button layoutX="319.0" layoutY="315.0" mnemonicParsing="false" text="Szyfruj &gt;" />
       <Button layoutX="312.0" layoutY="366.0" mnemonicParsing="false" text="&lt; Deszyfruj" />
-      <RadioButton layoutX="319.0" layoutY="421.0" mnemonicParsing="false" text="Plik">
+      <RadioButton layoutX="319.0" layoutY="421.0" mnemonicParsing="false" onAction="#onRadioButtonChange" text="Plik">
          <toggleGroup>
             <ToggleGroup fx:id="toggles" />
          </toggleGroup>
       </RadioButton>
-      <RadioButton layoutX="319.0" layoutY="455.0" mnemonicParsing="false" selected="true" text="Okno" toggleGroup="$toggles" />
+      <RadioButton layoutX="319.0" layoutY="455.0" mnemonicParsing="false" onAction="#onRadioButtonChange" selected="true" text="Okno" toggleGroup="$toggles" />
    </children>
 </AnchorPane>

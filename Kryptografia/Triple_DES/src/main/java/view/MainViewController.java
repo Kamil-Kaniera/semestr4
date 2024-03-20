@@ -1,7 +1,9 @@
 package view;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -13,6 +15,11 @@ public class MainViewController {
     private TextField secondKey;
     @FXML
     private TextField thirdKey;
+    @FXML
+    private ToggleGroup toggles;
+
+    //Status aktualnie zaznaczonego radio button
+    private String toggleStatus;
 
 
     @FXML
@@ -40,5 +47,10 @@ public class MainViewController {
         fileChooser.showSaveDialog(stage);
     }
 
+    @FXML
+    private void onRadioButtonChange() {
+        RadioButton button = (RadioButton) toggles.getSelectedToggle();
+        toggleStatus = button.getText();
+    }
 
 }
