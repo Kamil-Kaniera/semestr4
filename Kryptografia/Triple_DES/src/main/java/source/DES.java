@@ -116,7 +116,7 @@ public class DES {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private byte[][] dzielNaGrupy(byte[] zrodlo, int ileWGrupie) {
-        int ileGrup = (int)Math.ceil(zrodlo.length / (double)ileWGrupie);
+        int ileGrup = (int)Math.ceil((double)zrodlo.length / (double)ileWGrupie);
         byte[][] wynik = new byte[ileGrup][];
         int temp = 0;
 
@@ -144,7 +144,9 @@ public class DES {
         int temp = 1;
 
         for (int i = zrodlo.length - 1; i >= 0; i--) {
-            wynik += zrodlo[i] * temp;
+            // Konwersja wartości bajtowej na wartość całkowitą bez znaku
+            int bezZnaku = zrodlo[i] & 0xff;
+            wynik += bezZnaku * temp;
             temp *= 2;
         }
         return wynik;
@@ -352,7 +354,7 @@ public class DES {
         byte[] cipherBity = new byte[0];
         byte[] doSzyfrowania = new byte[0];
 
-        if (szyfrowanie == false) {
+        if (!szyfrowanie) {
             bity = Base64.getDecoder().decode(wiadomosc);
         }
 
@@ -378,9 +380,9 @@ public class DES {
                 String joinedBits = sb.toString();
                 kodowanoDoLanchucha.add((byte) Integer.parseInt(joinedBits, 2));
             }
-
-          //  wynik += StandardCharsets.ISO_8859_1.decode(java.nio.ByteBuffer.wrap(new byte[] {(byte) doInta(group)})).toString();
-
+            else{
+                wynik += doInta(group);
+            }
         }
 
         if (szyfrowanie) {
