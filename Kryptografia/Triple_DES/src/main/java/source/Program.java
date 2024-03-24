@@ -1,5 +1,5 @@
 package source;
-import java.io.*;
+import java.util.Scanner;
 
 public class Program {
     public static void main(String[] args) {
@@ -11,10 +11,11 @@ public class Program {
 
         DES obiekt = new DES();
 
-        Console cnsl
-                = System.console();
+        Scanner scanner = new Scanner(System.in);
 
-        String message = cnsl.readLine("Podaj tekst do zaszyfrowania: ");
+        System.out.print("Podaj tekst do zaszyfrowania: ");
+        String message = scanner.nextLine();
+        scanner.close();
 
         String zaszyfrowane = obiekt.szyfruj(message, klucz, true);
         System.out.println("Zaszyfrowane: " + zaszyfrowane);

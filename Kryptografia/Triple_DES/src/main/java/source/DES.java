@@ -144,8 +144,7 @@ public class DES {
         int temp = 1;
 
         for (int i = zrodlo.length - 1; i >= 0; i--) {
-            // Konwersja wartości bajtowej na wartość całkowitą bez znaku
-            int bezZnaku = zrodlo[i] & 0xff;
+            int bezZnaku = zrodlo[i];
             wynik += bezZnaku * temp;
             temp *= 2;
         }
@@ -155,7 +154,7 @@ public class DES {
     private byte[] doBitow(int zrodlo, int ileBitow) {
         byte[] wynik = new byte[ileBitow];
         int i = 0;
-        int temp = zrodlo;
+        int temp = zrodlo & 0xff;
 
         while (temp != 0) {
             wynik[i++] = (byte)(temp % 2);
@@ -349,6 +348,7 @@ public class DES {
 
     public String szyfruj(String wiadomosc, byte[] klucz, boolean szyfrowanie) {
         byte[] bity = wiadomosc.getBytes(StandardCharsets.ISO_8859_1);
+
         String wynik = "";
         byte[] cipherText = new byte[0];
         byte[] cipherBity = new byte[0];
@@ -381,8 +381,7 @@ public class DES {
                 kodowanoDoLanchucha.add((byte) Integer.parseInt(joinedBits, 2));
             }
             else{
-                wynik += doInta(group);
-            }
+                wynik += StandardCharsets.ISO_8859_1.decode(java.nio.ByteBuffer.wrap(new byte[] {(byte) doInta(group)})).toString();            }
         }
 
         if (szyfrowanie) {
