@@ -38,11 +38,13 @@ print("b. Osiągnięcie zadanej liczby iteracji")
 
 stopping_criteria = input("Twój wybór: ")
 
+epsilon = None
+max_iterations = None
+
 if stopping_criteria == 'a':
     epsilon = float(input("Podaj epsilon: "))
 elif stopping_criteria == 'b':
     max_iterations = int(input("Podaj maksymalną liczbę iteracji: "))
 
 print("\nRozwiązanie macierzy:")
-# print(jacobi(matrix, vector, np.zeros_like(vector), epsilon, max_iterations))
-print(jacobi(matrix, vector, np.zeros_like(vector), 0.05, 100))
+print(jacobi(matrix, vector, np.zeros_like(vector), epsilon, max_iterations))
