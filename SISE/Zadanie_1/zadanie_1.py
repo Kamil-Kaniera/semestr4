@@ -54,8 +54,33 @@ def bfs(start_node):
 
 
 # Depth-first search (w głąb)
-def dfs():
-    return
+def dfs(start_node):
+    stack = [(start_node, 0)]
+    visited = set()
+
+    while stack:
+        current_node, depth = stack.pop()
+        current_board = current_node.board
+
+        # Check if the current board is the goal state
+        if is_goal(current_board):
+            return current_node.path
+        # Convert the current board to a tuple of tuples and add it to the visited set
+        visited.add(tuple(map(tuple, current_board)))
+
+        # Check current depth
+        if depth < MAX_DEPTH:
+            # Generate all possible moves
+            moves = generate_moves(current_board)
+            moves.reverse()
+            for next_board in moves:
+                # Check if the next board configuration has not been visited
+                if tuple(map(tuple, next_board)) not in visited:
+                    # Add not visited node to the queue
+                    next_node = Node(next_board, current_node.parent, current_node.path + [next_board])
+                    stack.append((next_node, depth + 1))
+
+    return None
 
 
 # A*
@@ -122,7 +147,7 @@ start_board = [
 ]
 
 start_node = Node(start_board, path=[start_board])
-solution_path = bfs(start_node)
+solution_path = dfs(start_node)
 if solution_path:
     print("Solution found in {} moves:".format(len(solution_path)))
     for step, board in enumerate(solution_path):
