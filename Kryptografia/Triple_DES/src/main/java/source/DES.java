@@ -1,11 +1,12 @@
 package source;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collection;
-import java.util.Collections;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class DES {
     private final byte[] IP = {
@@ -418,7 +419,6 @@ public class DES {
         byte[] bity = wiadomosc.getBytes(StandardCharsets.ISO_8859_1);
 
         String wynik = "";
-        byte[] cipherText = new byte[0];
         byte[] cipherBity = new byte[0];
         boolean[] doSzyfrowania = new boolean[0];
 
@@ -448,4 +448,38 @@ public class DES {
         return wynik;
     }
 
+    public void szyfrujPlik(String inputFile, String outputFile, byte[] key, boolean encrypt) throws IOException {
+        Path inputPath = Paths.get(inputFile);
+        Path outputPath = Paths.get(outputFile);
+
+        byte[] fileContent = Files.readAllBytes(inputPath);
+        byte[] processedContent;
+
+        if (encrypt) {
+            fileContent = dodajPadding(fileContent);
+            processedContent = szyfruj(fileContent, key, true);
+
+        } else {
+            processedContent = szyfruj(fileContent, key, false);
+            processedContent = usunPadding(processedContent);
+
+        }
+
+        Files.write(outputPath, processedContent);
+    }
+
+    private byte[] dodajPadding(byte[] dane) {
+        int brakujaceBajty = 8 - (dane.length % 8);
+        byte[] daneZPaddingiem = new byte[dane.length + brakujaceBajty];
+        System.arraycopy(dane, 0, daneZPaddingiem, 0, dane.length);
+        for (int i = dane.length; i < daneZPaddingiem.length; i++) {
+            daneZPaddingiem[i] = (byte) brakujaceBajty;
+        }
+        return daneZPaddingiem;
+    }
+
+    private byte[] usunPadding(byte[] dane) {
+        int iloscPaddingu = dane[dane.length - 1];
+        return Arrays.copyOfRange(dane, 0, dane.length - iloscPaddingu);
+    }
 }
