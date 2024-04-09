@@ -43,20 +43,20 @@ namespace zad1
     static void EncodeText()
     {
         int[,] matrixH = {
-            {1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-            {1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-            {1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-            {0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-            {1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0},
-            {1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0},
-            {0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0},
-            {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1}
+            {0, 1, 1, 1, 0, 0, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 1, 1, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 1, 0, 1, 0,  0, 0, 1, 0, 0, 0, 0, 0},
+            {1, 1, 0, 1, 0, 1, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0},
+            {1, 1, 1, 0, 1, 0, 0, 1,  0, 0, 0, 0, 1, 0, 0, 0},
+            {1, 1, 1, 1, 0, 1, 0, 1,  0, 0, 0, 0, 0, 1, 0, 0},
+            {1, 1, 1, 1, 1, 0, 1, 1,  0, 0, 0, 0, 0, 0, 1, 0},
+            {1, 1, 1, 1, 1, 1, 1, 1,  0, 0, 0, 0, 0, 0, 0, 1}
         };
 
-        Code codeObj = new Code();
+        ErrorCorrectingCode errorCorrectingCodeObj = new ErrorCorrectingCode();
         string fileName = "../../data.txt";
 
-        codeObj.Coding(matrixH, fileName, "coded.txt", "coded2.txt");
+        errorCorrectingCodeObj.Coding(matrixH, fileName, "coded.txt", "codedString.txt");
         Console.WriteLine("Plik zakodowany pomyślnie.");
     }
     
@@ -64,19 +64,19 @@ namespace zad1
     static void DecodeText()
     {
         int[,] matrixH = {
-            {1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-            {1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
-            {1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-            {0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-            {1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0},
-            {1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0},
-            {0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0},
-            {1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1}
+            {0, 1, 1, 1, 0, 0, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 1, 1, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0},
+            {1, 0, 0, 0, 1, 0, 1, 0,  0, 0, 1, 0, 0, 0, 0, 0},
+            {1, 1, 0, 1, 0, 1, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0},
+            {1, 1, 1, 0, 1, 0, 0, 1,  0, 0, 0, 0, 1, 0, 0, 0},
+            {1, 1, 1, 1, 0, 1, 0, 1,  0, 0, 0, 0, 0, 1, 0, 0},
+            {1, 1, 1, 1, 1, 0, 1, 1,  0, 0, 0, 0, 0, 0, 1, 0},
+            {1, 1, 1, 1, 1, 1, 1, 1,  0, 0, 0, 0, 0, 0, 0, 1}
         };
 
-        Code codeObj = new Code();
+        ErrorCorrectingCode errorCorrectingCodeObj = new ErrorCorrectingCode();
 
-        codeObj.Checking(matrixH, "coded.txt", "decoded.txt");
+        errorCorrectingCodeObj.Checking(matrixH, "coded.txt", "decoded.txt");
         Console.WriteLine("Plik odkodowany pomyślnie.");
     }
 
