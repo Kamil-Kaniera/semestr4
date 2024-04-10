@@ -13,7 +13,7 @@ public class MainApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("mainView.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 700, 600);
         stage.setScene(scene);
-        stage.setTitle("Triple DEX");
+        stage.setTitle("Triple DES");
         stage.show();
     }
 
