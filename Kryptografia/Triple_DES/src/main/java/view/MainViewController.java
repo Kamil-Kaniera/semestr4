@@ -1,11 +1,15 @@
 package view;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import source.TripleDES;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+
+import static view.UtilityFunctions.*;
 
 public class MainViewController {
     private Stage stage;
@@ -16,11 +20,21 @@ public class MainViewController {
     @FXML
     private TextField thirdKey;
     @FXML
-    private ToggleGroup toggles;
+    private TextArea plainText;
+    @FXML
+    private TextArea cryptogram;
+
+    private String chosenPathPlainText = "";
+    private String chosenPathCryptogram = "";
+
 
     //Status aktualnie zaznaczonego radio button
-    private String toggleStatus;
+    private STATUS toggleStatus = STATUS.WINDOW;
 
+    private enum STATUS {
+        WINDOW,
+        FILE
+    }
 
     @FXML
     private void initialize() {
@@ -28,29 +42,98 @@ public class MainViewController {
 
     @FXML
     private void onKeyGeneratorButtonClick() {
-        firstKey.setText("0123456789ABCDEF");
-        secondKey.setText("1133557799BBDDFF");
-        thirdKey.setText("0022446688AACCEE");
+        firstKey.setText("12345678");
+        secondKey.setText("ABCDEF12");
+        thirdKey.setText("1A2B3C4D");
     }
 
     @FXML
-    private void onLoadButtonClick() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open Resource File");
-        fileChooser.showOpenDialog(stage);
+    private void onLoadPlainTextButtonClick() {
+        chosenPathPlainText = LoadFile(plainText, stage);
     }
 
     @FXML
-    private void onSaveButtonClick() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open Resource File");
-        fileChooser.showSaveDialog(stage);
+    private void onLoadCryptogramButtonClick() {
+        chosenPathCryptogram = LoadFile(cryptogram, stage);
     }
+
 
     @FXML
     private void onRadioButtonChange() {
-        RadioButton button = (RadioButton) toggles.getSelectedToggle();
-        toggleStatus = button.getText();
+        if(toggleStatus == STATUS.WINDOW) toggleStatus = STATUS.FILE;
+        else toggleStatus = STATUS.WINDOW;
     }
+
+    @FXML
+    private void onEncryptButtonClick(){
+        byte[] key1 = hexStringToByteArray(firstKey.getText());
+        byte[] key2 = hexStringToByteArray(secondKey.getText());
+        byte[] key3 = hexStringToByteArray(thirdKey.getText());
+
+        if (toggleStatus == STATUS.WINDOW) encryptWindow(key1, key2, key3);
+        else if (toggleStatus == STATUS.FILE) encryptFile(key1, key2, key3, getFileExtension(chosenPathPlainText));
+    }
+
+    @FXML
+    private void onDecryptButtonClick() {
+        byte[] key1 = hexStringToByteArray(firstKey.getText());
+        byte[] key2 = hexStringToByteArray(secondKey.getText());
+        byte[] key3 = hexStringToByteArray(thirdKey.getText());
+
+
+        if (toggleStatus == STATUS.WINDOW) decryptWindow(key1, key2, key3);
+        else if (toggleStatus == STATUS.FILE) decryptFile(key1, key2, key3, getFileExtension(chosenPathCryptogram));
+    }
+
+//-------------------------------------------------WINDOW-------------------------------------------------
+    private void encryptWindow(byte[] key1,  byte[] key2,  byte[] key3) {
+        cryptogram.setText("Szyfrowanie...");
+
+        byte[] message =  plainText.getText().getBytes(StandardCharsets.ISO_8859_1);
+
+        TripleDES tripleDes = new TripleDES();
+
+        byte[] encrypted = tripleDes.tripleSzyfruj(message, key1, key2, key3);
+
+        String encryptedText = byteArrayToHexString(encrypted);
+
+        cryptogram.setText(encryptedText);
+    }
+
+    private void decryptWindow(byte[] key1,  byte[] key2,  byte[] key3) {
+        plainText.setText("Odszyfrowanie...");
+
+        byte[] encrypted = hexStringToByteArray(cryptogram.getText());
+
+        TripleDES tripleDes = new TripleDES();
+
+        byte[] decrypted = tripleDes.tripleDeszyfruj(encrypted, key1, key2, key3);
+
+        plainText.setText(new String(decrypted, StandardCharsets.ISO_8859_1).replace("\0", ""));
+    }
+
+
+//-------------------------------------------------File-------------------------------------------------
+    private void encryptFile(byte[] key1,  byte[] key2,  byte[] key3, String fileExtension) {
+        TripleDES tripleDes = new TripleDES();
+
+        try {
+            tripleDes.tripleSzyfrujPlik(chosenPathPlainText, "encrypted_file." + fileExtension, key1, key2, key3, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void decryptFile(byte[] key1,  byte[] key2,  byte[] key3, String fileExtension) {
+        TripleDES tripleDes = new TripleDES();
+
+        try {
+            tripleDes.tripleSzyfrujPlik(chosenPathCryptogram, "decrypted_file." + fileExtension, key1, key2, key3, false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
 }

@@ -60,24 +60,12 @@
             <Font name="System Bold" size="12.0" />
          </font>
       </Label>
-      <TextArea layoutX="60.0" layoutY="272.0" prefHeight="200.0" prefWidth="200.0" promptText="Tekst jawny" />
-      <TextArea layoutX="440.0" layoutY="272.0" prefHeight="200.0" prefWidth="200.0" promptText="Szyfrogram" />
-      <Button layoutX="60.0" layoutY="240.0" mnemonicParsing="false" onAction="#onLoadButtonClick" text="Wczytaj" />
-      <Button layoutX="440.0" layoutY="240.0" mnemonicParsing="false" onAction="#onLoadButtonClick" text="Wczytaj" />
-      <Label layoutX="58.0" layoutY="490.0" text="Zapisz plik zawierający tekst jawny">
-         <font>
-            <Font name="System Bold" size="12.0" />
-         </font>
-      </Label>
-      <Label layoutX="438.0" layoutY="490.0" text="Zapisz plik zawierający szyfrogram">
-         <font>
-            <Font name="System Bold" size="12.0" />
-         </font>
-      </Label>
-      <Button layoutX="58.0" layoutY="516.0" mnemonicParsing="false" onAction="#onSaveButtonClick" text="Zapisz" />
-      <Button layoutX="438.0" layoutY="516.0" mnemonicParsing="false" onAction="#onSaveButtonClick" text="Zapisz" />
-      <Button layoutX="319.0" layoutY="315.0" mnemonicParsing="false" text="Szyfruj &gt;" />
-      <Button layoutX="312.0" layoutY="366.0" mnemonicParsing="false" text="&lt; Deszyfruj" />
+      <TextArea fx:id="plainText" layoutX="60.0" layoutY="272.0" prefHeight="280.0" prefWidth="200.0" promptText="Tekst jawny" wrapText="true" />
+      <TextArea fx:id="cryptogram" layoutX="440.0" layoutY="272.0" prefHeight="280.0" prefWidth="200.0" promptText="Szyfrogram" wrapText="true" />
+      <Button layoutX="60.0" layoutY="240.0" mnemonicParsing="false" onAction="#onLoadPlainTextButtonClick" text="Wczytaj" />
+      <Button layoutX="440.0" layoutY="240.0" mnemonicParsing="false" onAction="#onLoadCryptogramButtonClick" text="Wczytaj" />
+      <Button layoutX="319.0" layoutY="315.0" mnemonicParsing="false" onAction="#onEncryptButtonClick" text="Szyfruj &gt;" />
+      <Button layoutX="312.0" layoutY="366.0" mnemonicParsing="false" onAction="#onDecryptButtonClick" text="&lt; Deszyfruj" />
       <RadioButton layoutX="319.0" layoutY="421.0" mnemonicParsing="false" onAction="#onRadioButtonChange" text="Plik">
          <toggleGroup>
             <ToggleGroup fx:id="toggles" />
