@@ -9,80 +9,87 @@ namespace zad1
         private const int ByteInBits = 8;
 
         // Kodowanie wiadomości
-        public void Coding(int[,] matrixH, string inputFileName, string encodedFileName, string encodedStringFileName)
+       public void Coding(int[,] matrixH, string inputFileName, string encodedFileName, string encodedStringFileName)
+{
+    using (StreamReader input = new StreamReader(inputFileName))
+    using (StreamWriter encoded = new StreamWriter(encodedFileName, false))
+    using (FileStream code2 = new FileStream(encodedStringFileName, FileMode.Create))
+    {
+        while (true)
         {
-            using (StreamReader input = new StreamReader(inputFileName, Encoding.UTF8))
-            using (StreamWriter encoded = new StreamWriter(encodedFileName, false, Encoding.UTF8))
-            using (FileStream code2 = new FileStream(encodedStringFileName, FileMode.Create))
+            int symbol = input.Read();
+            if (symbol == -1)
+                break;
+
+            int[] message = new int[ByteInBits];
+            int[] tableControl = new int[ByteInBits];
+
+            // Konwersja symbolu na binarny ciąg bitów
+            for (int i = ByteInBits - 1; i >= 0; i--)
             {
-                while (true)
+                message[i] = symbol % 2;
+                symbol /= 2;
+            }
+
+            // Obliczenie kontrolnego ciągu bitów
+            for (int i = 0; i < ByteInBits; i++)
+            {
+                for (int j = 0; j < ByteInBits; j++)
                 {
-                    int symbol = input.Read();
-                    if (symbol == -1)
-                        break;
-
-                    int[] message = new int[ByteInBits];
-                    int[] tableControl = new int[ByteInBits];
-
-                    // Konwersja symbolu na binarny ciąg bitów
-                    for (int i = ByteInBits - 1; i >= 0; i--)
-                    {
-                        message[i] = symbol % 2;
-                        symbol /= 2;
-                    }
-
-                    // Obliczenie kontrolnego ciągu bitów
-                    for (int i = 0; i < ByteInBits; i++)
-                    {
-                        for (int j = 0; j < ByteInBits; j++)
-                        {
-                            tableControl[i] += message[j] * matrixH[i, j];
-                        }
-                        tableControl[i] %= 2;
-                    }
-
-                    // Zapisanie zakodowanej wiadomości do pliku
-                    for (int i = 0; i < ByteInBits; i++)
-                    {
-                        encoded.Write(message[i]);
-                    }
-                    
-                    // Zapisanie kontrolnego ciągu bitów do pliku
-                    for (int i = 0; i < ByteInBits; i++)
-                    {
-                        encoded.Write(tableControl[i]);
-                    }
-
-                    encoded.WriteLine();
-
-                    int a = 128;
-                    int kod;
-
-                    // Konwersja binarnego ciągu bitów na symbol i zapis do pliku
-                    kod = 0;
-                    for (int i = 0; i < ByteInBits; i++)
-                    {
-                        kod += a * message[i];
-                        a /= 2;
-                    }
-                    code2.WriteByte((byte)kod);
-
-                    // Konwersja kontrolnego ciągu bitów na symbol i zapis do pliku
-                    kod = 0;
-                    for (int i = 0; i < ByteInBits; i++)
-                    {
-                        kod += a * tableControl[i];
-                        a /= 2;
-                    }
-                    code2.WriteByte((byte)kod);
+                    tableControl[i] += message[j] * matrixH[i, j];
                 }
+                tableControl[i] %= 2;
+            }
+
+            // Zapisanie zakodowanej wiadomości do pliku
+            for (int i = 0; i < ByteInBits; i++)
+            {
+                encoded.Write(message[i]);
+            }
+            
+            // Zapisanie kontrolnego ciągu bitów do pliku
+            for (int i = 0; i < ByteInBits; i++)
+            {
+                encoded.Write(tableControl[i]);
+            }
+
+            encoded.WriteLine();
+
+            int a = 128;
+            int kod;
+
+            // Konwersja binarnego ciągu bitów na symbol i zapis do pliku
+            kod = 0;
+            for (int i = 0; i < ByteInBits; i++)
+            {
+                kod += a * message[i];
+                a /= 2;
+            }
+            code2.WriteByte((byte)kod);
+
+            // Konwersja kontrolnego ciągu bitów na symbol i zapis do pliku
+            kod = 0;
+            for (int i = 0; i < ByteInBits; i++)
+            {
+                kod += a * tableControl[i];
+                a /= 2;
+            }
+            code2.WriteByte((byte)kod);
+
+            // Uzupełnienie zerami, aby zapisane bloki były 8-bitowe
+            for (int i = 0; i < 8 - ByteInBits; i++)
+            {
+                code2.WriteByte(48);  // Kod ASCII dla '0'
             }
         }
+    }
+}
+
 
         public void Checking(int[,] matrixH, string encodedFileName, string decodedFileName)
         {
-            using (StreamReader encoded = new StreamReader(encodedFileName, Encoding.UTF8))
-            using (StreamWriter decoded = new StreamWriter(decodedFileName, false, Encoding.UTF8))
+            using (StreamReader encoded = new StreamReader(encodedFileName))
+            using (StreamWriter decoded = new StreamWriter(decodedFileName, false))
             {
                 int[] encodedArray = new int[ByteInBits * 2];
                 int[] errorArray = new int[ByteInBits];
