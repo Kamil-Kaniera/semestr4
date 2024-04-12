@@ -16,8 +16,11 @@ def absolute(x):
     return abs(x)
 
 
-def polynomial(x):
+def polynomial1(x):
     return horner_scheme(x, [1, -2, 1, 1], 4)
+
+def polynomial2(x):
+    return horner_scheme(x, [1, 0, -5, -1, 2], 5)
 
 
 def trigonometric(x):
@@ -35,16 +38,14 @@ def equidistant_nodes(a, b, n):
 
 
 # Wczytanie danych
-beginning = float(input("Podaj początek przedziału interpolacji: "))
-end = float(input("Podaj koniec przedziału interpolacji: "))
-number_of_nodes = int(input("Podaj liczbę węzłów interpolacyjnych: "))
 function_choice = int(input(
     "Wybierz funkcję do interpolacji:\n"
     "1. Funkcja liniowa: f(x) = x\n"
     "2. Funkcja modułu: f(x) = |x|\n"
     "3. Wielomian: f(x) = x^3 - 2x^2 + x + 1\n"
-    "4. Funkcja trygonometryczna: f(x) = sin(x)\n"
-    "5. Złożenie: f(x) = sin(x^2)\n"))
+    "4. Wielomian: f(x) = x^4 - 5x^2 - x + 2\n"
+    "5. Funkcja trygonometryczna: f(x) = sin(x)\n"
+    "6. Złożenie: f(x) = sin(x^2)\n"))
 
 # Wybór funkcji do interpolacji
 if function_choice == 1:
@@ -52,14 +53,21 @@ if function_choice == 1:
 elif function_choice == 2:
     function = absolute
 elif function_choice == 3:
-    function = polynomial
+    function = polynomial1
 elif function_choice == 4:
-    function = trigonometric
+    function = polynomial2
 elif function_choice == 5:
+    function = trigonometric
+elif function_choice == 6:
     function = composition
 else:
     print("Niepoprawny wybór funkcji.")
     exit()
+
+beginning = float(input("Podaj początek przedziału interpolacji: "))
+end = float(input("Podaj koniec przedziału interpolacji: "))
+number_of_nodes = int(input("Podaj liczbę węzłów interpolacyjnych: "))
+
 
 # Generowanie węzłów interpolacji
 interpolation_nodes = equidistant_nodes(beginning, end, number_of_nodes)
@@ -69,7 +77,14 @@ function_values = function(interpolation_nodes)
 
 # Interpolacja Lagrange'a
 x_range = np.linspace(beginning, end, 1000)
-interpolated_values = [lagrange_interpolation(interpolation_nodes, function_values, x) for x in x_range]
+interpolated_values = []
+interpolating_polynomial = ""
+
+for x in x_range:
+    interpolated_value, interpolating_polynomial = lagrange_interpolation(interpolation_nodes, function_values, x)
+    interpolated_values.append(interpolated_value)
+
+print("\nf(x) = ", interpolating_polynomial, "\n")
 
 # Obliczanie wartości oryginalnej funkcji
 original_values = function(x_range)
