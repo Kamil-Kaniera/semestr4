@@ -72,5 +72,7 @@
          </toggleGroup>
       </RadioButton>
       <RadioButton layoutX="319.0" layoutY="455.0" mnemonicParsing="false" onAction="#onRadioButtonChange" selected="true" text="Okno" toggleGroup="$toggles" />
+      <Label fx:id="message" layoutX="282.0" layoutY="264.0" text="Plik pomyślnie zapisany" textFill="RED" />
+      <Button fx:id="cleanButton" layoutX="320.0" layoutY="514.0" mnemonicParsing="false" onAction="#onCleanButtonClick" text="Wyczyść" />
    </children>
 </AnchorPane>

@@ -1,6 +1,7 @@
 package view;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
@@ -23,6 +24,8 @@ public class MainViewController {
     private TextArea plainText;
     @FXML
     private TextArea cryptogram;
+    @FXML
+    private Label message;
 
     private String chosenPathPlainText = "";
     private String chosenPathCryptogram = "";
@@ -38,6 +41,14 @@ public class MainViewController {
 
     @FXML
     private void initialize() {
+        message.setText("");
+    }
+
+    @FXML
+    private void onCleanButtonClick() {
+        message.setText("");
+        cryptogram.clear();
+        plainText.clear();
     }
 
     @FXML
@@ -49,23 +60,27 @@ public class MainViewController {
 
     @FXML
     private void onLoadPlainTextButtonClick() {
+        message.setText("");
         chosenPathPlainText = LoadFile(plainText, stage);
     }
 
     @FXML
     private void onLoadCryptogramButtonClick() {
+        message.setText("");
         chosenPathCryptogram = LoadFile(cryptogram, stage);
     }
 
 
     @FXML
     private void onRadioButtonChange() {
+        message.setText("");
         if(toggleStatus == STATUS.WINDOW) toggleStatus = STATUS.FILE;
         else toggleStatus = STATUS.WINDOW;
     }
 
     @FXML
     private void onEncryptButtonClick(){
+        message.setText("");
         byte[] key1 = hexStringToByteArray(firstKey.getText());
         byte[] key2 = hexStringToByteArray(secondKey.getText());
         byte[] key3 = hexStringToByteArray(thirdKey.getText());
@@ -76,6 +91,7 @@ public class MainViewController {
 
     @FXML
     private void onDecryptButtonClick() {
+        message.setText("");
         byte[] key1 = hexStringToByteArray(firstKey.getText());
         byte[] key2 = hexStringToByteArray(secondKey.getText());
         byte[] key3 = hexStringToByteArray(thirdKey.getText());
@@ -119,6 +135,7 @@ public class MainViewController {
 
         try {
             tripleDes.tripleSzyfrujPlik(chosenPathPlainText, "encrypted_file." + fileExtension, key1, key2, key3, true);
+            message.setText("Plik pomyślnie zapisany");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -129,6 +146,7 @@ public class MainViewController {
 
         try {
             tripleDes.tripleSzyfrujPlik(chosenPathCryptogram, "decrypted_file." + fileExtension, key1, key2, key3, false);
+            message.setText("Plik pomyślnie zapisany");
         } catch (IOException e) {
             e.printStackTrace();
         }
