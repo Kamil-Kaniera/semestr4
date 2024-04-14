@@ -66,7 +66,7 @@ def bfs(start_node):
             stats.closed_states = len(closed_set)
             stats.visited_states = stats.closed_states + len(queue)
             stats.max_depth = max_depth
-            return current_node, stats
+            return (current_node, stats)
 
         # Convert the current board to a tuple of tuples and add it to the closed_set
         closed_set.add(tuple(map(tuple, current_board)))
@@ -104,7 +104,7 @@ def dfs(start_node):
             stats.closed_states = len(closed_set)
             stats.visited_states = stats.closed_states + len(stack)
             stats.max_depth = max_depth
-            return current_node, stats
+            return (current_node, stats)
 
         # Convert the current board to a tuple of tuples and add it to the closed_set
         closed_set.add(tuple(map(tuple, current_board)))
@@ -124,7 +124,12 @@ def dfs(start_node):
                     # Update max_depth
                     max_depth = max(max_depth, depth + 1)
 
-    return None
+    end_time = time.time()
+    stats.time = "{:.3f}".format(end_time - start_time)
+    stats.closed_states = len(closed_set)
+    stats.visited_states = stats.closed_states + len(stack)
+    stats.max_depth = max_depth
+    return None, stats
 
 
 # A*
@@ -148,7 +153,7 @@ def a_star(start_node, heuristic_func):
             stats.closed_states = len(closed_set)
             stats.visited_states = stats.closed_states + len(open_list)
             stats.max_depth = max_depth
-            return current_node, stats
+            return (current_node, stats)
 
         # Convert the current board to a tuple of tuples and add it to the visited set
         closed_set.add(tuple(map(tuple, current_node.board)))
@@ -172,7 +177,12 @@ def a_star(start_node, heuristic_func):
                 # Add the next node to the open list with its combined score
                 heappush(open_list, HeuristicNode(next_node, f_score))
 
-    return None
+    end_time = time.time()
+    stats.time = "{:.3f}".format(end_time - start_time)
+    stats.closed_states = len(closed_set)
+    stats.visited_states = stats.closed_states + len(open_list)
+    stats.max_depth = max_depth
+    return None, stats
 
 
 # -----------------------  Heuristics --------------------------
@@ -292,7 +302,6 @@ def save_solution(solution_node, file_name):
 
 
 def save_statistics(solution_node, statistics, file_name):
-    solution_length = ""
     if solution_node:
         solution_length = str(len(solution_node.direction))
     else:
@@ -322,17 +331,19 @@ start_node = Node(start_board, path=[start_board])
 # Set order
 if arguments.order == "hamm":
     NEIGHBOURS_ORDER = ["R", "D", "U", "L"]
-    solution_node, statistics = a_star(start_node, hamming_distance)
+    result = a_star(start_node, hamming_distance)
 elif arguments.order == "manh":
     NEIGHBOURS_ORDER = ["R", "D", "U", "L"]
-    solution_node, statistics = a_star(start_node, manhattan_distance)
+    result = a_star(start_node, manhattan_distance)
 else:
     NEIGHBOURS_ORDER = [arguments.order[0], arguments.order[1], arguments.order[2], arguments.order[3]]
 
     if arguments.algorithm == "bfs":
-        solution_node, statistics = bfs(start_node)
+        result = bfs(start_node)
     elif arguments.algorithm == "dfs":
-        solution_node, statistics = dfs(start_node)
+        result = dfs(start_node)
 
+solution_node = result[0]
+statistics = result[1]
 save_solution(solution_node, file_name=arguments.solution_file)
 save_statistics(solution_node, statistics, file_name=arguments.statistic_file)
