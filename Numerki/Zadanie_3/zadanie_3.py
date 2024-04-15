@@ -19,6 +19,7 @@ def absolute(x):
 def polynomial1(x):
     return horner_scheme(x, [1, -2, 1, 1], 4)
 
+
 def polynomial2(x):
     return horner_scheme(x, [1, 0, -5, -1, 2], 5)
 
@@ -67,7 +68,6 @@ else:
 beginning = float(input("Podaj początek przedziału interpolacji: "))
 end = float(input("Podaj koniec przedziału interpolacji: "))
 number_of_nodes = int(input("Podaj liczbę węzłów interpolacyjnych: "))
-
 
 # Generowanie węzłów interpolacji
 interpolation_nodes = equidistant_nodes(beginning, end, number_of_nodes)
