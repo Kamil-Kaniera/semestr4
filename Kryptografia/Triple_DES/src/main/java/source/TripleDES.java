@@ -21,6 +21,7 @@ public class TripleDES {
     }
 
     public byte[] tripleSzyfruj(byte[] wiadomosc, byte[] klucz1, byte[] klucz2, byte[] klucz3) {
+        wiadomosc= dodajPadding(wiadomosc);
         byte[] firstEncryption = des1.szyfruj(wiadomosc, klucz1, true);
         byte[] secondDecryption = des2.szyfruj(firstEncryption, klucz2, false);
 
@@ -31,22 +32,10 @@ public class TripleDES {
         byte[] firstDecryption = des3.szyfruj(wiadomosc, klucz3, false);
         byte[] secondEncryption = des2.szyfruj(firstDecryption, klucz2, true);
 
-        return des1.szyfruj(secondEncryption, klucz1, false);
+        return usunPadding(des1.szyfruj(secondEncryption, klucz1, false));
+
     }
 
-    public String tripleSzyfruj(String wiadomosc, byte[] klucz1, byte[] klucz2, byte[] klucz3) {
-        byte[] bity = wiadomosc.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] encryptedBytes = tripleSzyfruj(bity, klucz1, klucz2, klucz3);
-
-        return Base64.getEncoder().encodeToString(encryptedBytes);
-    }
-
-    public String tripleDeszyfruj(String wiadomosc, byte[] klucz1, byte[] klucz2, byte[] klucz3) {
-        byte[] bity = Base64.getDecoder().decode(wiadomosc);
-        byte[] decryptedBytes = tripleDeszyfruj(bity, klucz1, klucz2, klucz3);
-
-        return new String(decryptedBytes, StandardCharsets.ISO_8859_1);
-    }
     public void tripleSzyfrujPlik(String inputFile, String outputFile, byte[] key1, byte[] key2, byte[] key3, boolean encrypt) throws IOException {
         Path inputPath = Paths.get(inputFile);
         Path outputPath = Paths.get(outputFile);
@@ -55,12 +44,12 @@ public class TripleDES {
         byte[] processedContent = new byte[0];
 
         if (encrypt) {
-            fileContent = dodajPadding(fileContent);
+//            fileContent = dodajPadding(fileContent);
             processedContent = tripleSzyfruj(fileContent, key1, key2, key3);
 
         } else {
             processedContent = tripleDeszyfruj(fileContent, key1, key2, key3);
-            processedContent = usunPadding(processedContent);
+//            processedContent = usunPadding(processedContent);
         }
 
         Files.write(outputPath, processedContent);

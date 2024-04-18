@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DES {
-    private final byte[] IP = {
+    private final int[] IP = {
             58, 50, 42, 34, 26, 18, 10, 2,
             60, 52, 44, 36, 28, 20, 12, 4,
             62, 54, 46, 38, 30, 22, 14, 6,
@@ -19,7 +19,7 @@ public class DES {
             61, 53, 45, 37, 29, 21, 13, 5,
             63, 55, 47, 39, 31, 23, 15, 7};
 
-    private final byte[] FP = {
+    private final int[] FP = {
             40, 8, 48, 16, 56, 24, 64, 32,
             39, 7, 47, 15, 55, 23, 63, 31,
             38, 6, 46, 14, 54, 22, 62, 30,
@@ -29,7 +29,7 @@ public class DES {
             34, 2, 42, 10, 50, 18, 58, 26,
             33, 1, 41, 9, 49, 17, 57, 25};
 
-    private final byte[] PC1 = {
+    private final int[] PC1 = {
             57, 49, 41, 33, 25, 17, 9,
             1, 58, 50, 42, 34, 26, 18,
             10, 2, 59, 51, 43, 35, 27,
@@ -39,7 +39,7 @@ public class DES {
             14, 6, 61, 53, 45, 37, 29,
             21, 13, 5, 28, 20, 12, 4};
 
-    private final byte[] PC2 = {
+    private final int[] PC2 = {
             14, 17, 11, 24, 1, 5,
             3, 28, 15, 6, 21, 10,
             23, 19, 12, 4, 26, 8,
@@ -49,7 +49,7 @@ public class DES {
             44, 49, 39, 56, 34, 53,
             46, 42, 50, 36, 29, 32};
 
-    private final byte[] EX = {
+    private final int[] EX = {
             32, 1, 2, 3, 4, 5,
             4, 5, 6, 7, 8, 9,
             8, 9, 10, 11, 12, 13,
@@ -59,7 +59,7 @@ public class DES {
             24, 25, 26, 27, 28, 29,
             28, 29, 30, 31, 32, 1};
 
-    private final byte[] PBLOCK = {
+    private final int[] PBLOCK = {
             16, 7, 20, 21,
             29, 12, 28, 17,
             1, 15, 23, 26,
@@ -69,7 +69,7 @@ public class DES {
             19, 13, 30, 6,
             22, 11, 4, 25};
 
-    private final byte[][] SBox = {
+    private final int[][] SBox = {
 
                     {14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
                     0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
@@ -116,370 +116,215 @@ public class DES {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private boolean[][] dzielNaGrupy(boolean[] zrodlo, int ileWGrupie) {
-        int ileGrup = (int)Math.ceil((double)zrodlo.length / (double)ileWGrupie);
-        boolean[][] wynik = new boolean[ileGrup][];
-        int temp = 0;
+//    public static void main(String[] args) {
+//        try {
+//            byte[] key = {(byte) 19, (byte) 52, (byte) 87, (byte) 121, (byte) 155, (byte) 188, (byte) 223, (byte) 241}; // 8-byte key
+//            byte[] plaintext = "Hello, DES!jiuhy".getBytes(); // Message to encrypt
+//
+//            byte[] encrypted = szyfruj(plaintext, key, true);
+//            System.out.println("Encrypted: " + bytesToHex(encrypted));
+//
+//            byte[] decrypted = szyfruj(encrypted, key, false);
+//            System.out.println("Decrypted: " + new String(decrypted));
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
-        for (int i = 0; i < ileGrup; i++) {
-            wynik[i] = new boolean[ileWGrupie];
-            for (int j = 0; j < ileWGrupie; j++) {
-                if (i != ileGrup - 1) {
-                    wynik[i][j] = zrodlo[i * ileWGrupie + j];
-                } else {
-                    int ileLewych = zrodlo.length - i * ileWGrupie;
-                    if (j < ileWGrupie - ileLewych) {
-                        wynik[i][j] = false;
-                    } else {
-                        wynik[i][j] = zrodlo[i * ileWGrupie + temp++];
-                    }
-                }
-            }
+    public  byte[] szyfruj(byte[] wiadomosc, byte[] klucz, boolean szyfruj) {
+        int blockSize = 8; // 8 bajtów dla DES
+        int numOfBlocks = (wiadomosc.length + blockSize - 1) / blockSize;
+
+        byte[] result = new byte[wiadomosc.length];
+
+        for (int i = 0; i < numOfBlocks; i++) {
+            byte[] block = Arrays.copyOfRange(wiadomosc, i * blockSize, (i + 1) * blockSize);
+            byte[] processedBlock = szyfrujBlok(block, klucz, szyfruj);
+            System.arraycopy(processedBlock, 0, result, i * blockSize, blockSize);
         }
 
-        return wynik;
+        return result;
     }
 
-    private byte[][] dzielNaGrupy(byte[] zrodlo, int ileWGrupie) {
-        int ileGrup = (int)Math.ceil((double)zrodlo.length / (double)ileWGrupie);
-        byte[][] wynik = new byte[ileGrup][];
-        int temp = 0;
-
-        for (int i = 0; i < ileGrup; i++) {
-            wynik[i] = new byte[ileWGrupie];
-            for (int j = 0; j < ileWGrupie; j++) {
-                if (i != ileGrup - 1) {
-                    wynik[i][j] = zrodlo[i * ileWGrupie + j];
-                } else {
-                    int ileLewych = zrodlo.length - i * ileWGrupie;
-                    if (j < ileWGrupie - ileLewych) {
-                        wynik[i][j] = 0;
-                    } else {
-                        wynik[i][j] = zrodlo[i * ileWGrupie + temp++];
-                    }
-                }
-            }
-        }
-
-        return wynik;
-    }
-
-    private int doInta(byte[] zrodlo) {
-        int wynik = 0;
-        int temp = 1;
-
-        for (int i = zrodlo.length - 1; i >= 0; i--) {
-            int bezZnaku = zrodlo[i];
-            wynik += bezZnaku * temp;
-            temp *= 2;
-        }
-        return wynik;
-    }
-
-    private int doInta(boolean[] zrodlo) {
-        int wynik = 0;
-        int temp = 1;
-
-        for (int i = zrodlo.length - 1; i >= 0; i--) {
-            int bezZnaku = zrodlo[i] ? 1 : 0; // Konwersja boolean na int
-            wynik += bezZnaku * temp;
-            temp *= 2;
-        }
-        return wynik;
-    }
-    private boolean[] doBitow(int zrodlo, int ileBitow) {
-        boolean[] wynik = new boolean[ileBitow];
-        int i = 0;
-        int temp = zrodlo & 0xff;
-
-        while (temp != 0) {
-            wynik[i++] = (temp % 2) == 1;
-            temp /= 2;
-        }
-
-        // Odwracanie tablicy wynik
-        boolean[] odwroconyWynik = new boolean[wynik.length];
-        for (int j = 0; j < wynik.length; j++) {
-            odwroconyWynik[j] = wynik[wynik.length - 1 - j];
-        }
-
-        return odwroconyWynik;
-    }
-
-
-    private boolean[] OperacjaXOR(boolean[] jeden, boolean[] dwa) {
-        boolean[] xor = new boolean[jeden.length];
-        for (int i = 0; i < xor.length; i++) {
-            if (jeden[i] == dwa[i]) {
-                xor[i] = false;
-            } else {
-                xor[i] = true;
-            }
-        }
-
-        return xor;
-    }
-
-    private boolean[] permutuj(boolean[] oryginalny, byte[] permutacja) {
-        boolean[] permutowane = new boolean[permutacja.length];
-
-        for (int i = 0; i < permutacja.length; i++) {
-            permutowane[i] = oryginalny[permutacja[i] - 1];
-        }
-
-        return permutowane;
-    }
-
-    private boolean[] concat(boolean[] lewa, boolean[] prawa) {
-        boolean[] konkatenacja = new boolean[lewa.length + prawa.length];
-        int j = 0;
-        for (int i = 0; i < lewa.length; i++, j++) {
-            konkatenacja[j] = lewa[i];
-        }
-        for (int i = 0; i < prawa.length; i++, j++) {
-            konkatenacja[j] = prawa[i];
-        }
-
-        return konkatenacja;
-    }
-
-    private byte[] concat(byte[] lewa, byte[] prawa) {
-        byte[] konkatenacja = new byte[lewa.length + prawa.length];
-        int j = 0;
-        for (int i = 0; i < lewa.length; i++, j++) {
-            konkatenacja[j] = lewa[i];
-        }
-        for (int i = 0; i < prawa.length; i++, j++) {
-            konkatenacja[j] = prawa[i];
-        }
-
-        return konkatenacja;
-    }
-
-    private boolean[] przesunLewo(boolean[] przesuniecie) {
-        boolean pierwszy = przesuniecie[0];
-        boolean[] przesuniety = new boolean[przesuniecie.length];
-
-        for (int i = 0; i < przesuniecie.length - 1; i++) {
-            przesuniety[i] = przesuniecie[i + 1];
-        }
-        przesuniety[przesuniecie.length - 1] = pierwszy;
-
-        return przesuniety;
-    }
-
-    private boolean[] przesunLewo(boolean[] przesuniecie, byte liczba) {
-        boolean[] przesuniety = new boolean[przesuniecie.length];
-        System.arraycopy(przesuniecie, 0, przesuniety, 0, przesuniecie.length);
-        for (int i = 0; i < liczba; i++) {
-            przesuniety = przesunLewo(przesuniety);
-        }
-
-        return przesuniety;
-    }
-
-    private boolean[] lewaPolowa(boolean[] zrodlo) {
-        int dlugosc = zrodlo.length / 2;
-        boolean[] lewaStrona = new boolean[dlugosc];
-
-        for (int i = 0; i < dlugosc; i++) {
-            lewaStrona[i] = zrodlo[i];
-        }
-
-        return lewaStrona;
-    }
-
-    private boolean[] prawaPolowa(boolean[] zrodlo) {
-        int dlugosc = zrodlo.length / 2;
-        boolean[] prawaStrona = new boolean[dlugosc];
-
-        for (int i = 0; i < dlugosc; i++) {
-            prawaStrona[i] = zrodlo[dlugosc + i];
-        }
-
-        return prawaStrona;
-    }
-    private boolean[] kluczByteNaBoolean(byte[] klucz) {
-        boolean[] kluczBoolean = new boolean[64];
-        int index = 0;
-        for (byte b : klucz) {
-            for (int j = 7; j >= 0; j--) {
-                kluczBoolean[index++] = ((b >> j) & 0x01) == 1;
-            }
-        }
-        return kluczBoolean;
-    }
-
-    private byte[] booleanNaByte(boolean[] wejscie) {
-        byte[] wyjscie = new byte[(int) Math.ceil(wejscie.length / 8.0)];
-        int index = 0;
-        for (int i = 0; i < wejscie.length; i += 8) {
-            byte bajt = 0;
-            for (int j = 0; j < 8; j++) {
-                if (i + j < wejscie.length && wejscie[i + j]) {
-                    bajt |= (1 << (7 - j));
-                }
-            }
-            wyjscie[index++] = bajt;
-        }
-        return wyjscie;
-    }
-    private boolean[][] generujPodKlucze(boolean[] originalnyKlucz) {
-        boolean[] permutowanyKlucz = permutuj(originalnyKlucz, PC1);
-        boolean[] temp;
-        boolean[][] podKlucze = new boolean[16][];
-        boolean[] prawyKlucz = prawaPolowa(permutowanyKlucz);
-        boolean[] lewyKlucz = lewaPolowa(permutowanyKlucz);
-
-        for (int i = 0; i < 16; i++) {
-            lewyKlucz = przesunLewo(lewyKlucz, ShiftKey[i]);
-            prawyKlucz = przesunLewo(prawyKlucz, ShiftKey[i]);
-            temp = concat(lewyKlucz, prawyKlucz);
-            podKlucze[i] = permutuj(temp, PC2);
-        }
-
-        return podKlucze;
-    }
-
-    private int dostanNumer(boolean[] zrodlo) {
-        boolean[] kolumna = { zrodlo[1], zrodlo[2], zrodlo[3], zrodlo[4] };
-        boolean[] linia = { zrodlo[0], zrodlo[5] };
-
-        return doInta(linia) * 16 + doInta(kolumna);
-    }
-
-    private boolean[] funkcjaFeistela(boolean[] prawo, boolean[] klucz) {
-        boolean[] wynik = new boolean[0];
-        boolean[] prawoPermut = permutuj(prawo, EX);
-        boolean[] xor = OperacjaXOR(prawoPermut, klucz);
-        boolean[][] grupy = dzielNaGrupy(xor, 6);
-
-        for (int i = 0; i < grupy.length; i++) {
-            wynik = concat(wynik, doBitow(SBox[i][dostanNumer(grupy[i])], 4));
-        }
-        wynik = permutuj(wynik, PBLOCK);
-
-        return wynik;
-    }
-
-    private boolean[] wykonujIteracje(boolean[] lewa, boolean[] prawa, boolean[][] podKlucze) {
-        boolean[] poprzedniaLewa = new boolean[lewa.length];
-        for (int i = 0; i < 16; i++) {
-            System.arraycopy(lewa, 0, poprzedniaLewa, 0, lewa.length);
-            System.arraycopy(prawa, 0, lewa, 0, prawa.length);
-            prawa = OperacjaXOR(poprzedniaLewa, funkcjaFeistela(prawa, podKlucze[i]));
-        }
-        boolean[] wynik = concat(prawa, lewa);
-        wynik = permutuj(wynik, FP);
-
-        return wynik;
-    }
-
-    /*########### METODY PUBLICZNE ##########*/
-
-    public byte[] szyfruj(boolean[] wiadomosc, byte[] klucz, boolean szyfrowanie) {
-        boolean[][] podKlucze = generujPodKlucze(kluczByteNaBoolean(klucz));
-        if (!szyfrowanie) {
-            for (int i = 0; i < podKlucze.length / 2; i++) {
-                boolean[] temp = podKlucze[i];
-                podKlucze[i] = podKlucze[podKlucze.length - 1 - i];
-                podKlucze[podKlucze.length - 1 - i] = temp;
-            }
-        }
-
-        boolean[] poczatkowaPerm = permutuj(wiadomosc, IP);
-        boolean[] lewaTab = lewaPolowa(poczatkowaPerm);
-        boolean[] prawaTab = prawaPolowa(poczatkowaPerm);
-        boolean[] cipherText = wykonujIteracje(lewaTab, prawaTab, podKlucze);
-
-        return booleanNaByte(cipherText);
-    }
-
-    public byte[] szyfruj(byte[] wiadomosc, byte[] klucz, boolean szyfrowanie) {
-        byte[] cipherText = new byte[0];
-        byte[] cipherBity = new byte[0];
-        boolean[] doSzyfrowania = new boolean[0];
-
-        for (int i = 0; i < wiadomosc.length; i++) {
-            doSzyfrowania = concat(doSzyfrowania, doBitow(wiadomosc[i], 8));
-        }
-
-        boolean[][] grupa64Bitow = dzielNaGrupy(doSzyfrowania, 64);
-
-        for (int i = 0; i < grupa64Bitow.length; i++) {
-            cipherBity = concat(cipherBity, szyfruj(grupa64Bitow[i], klucz, szyfrowanie));
-        }
-
-
-        return cipherBity;
-    }
-
-
-    public String szyfruj(String wiadomosc, byte[] klucz, boolean szyfrowanie) {
-        byte[] bity = wiadomosc.getBytes(StandardCharsets.ISO_8859_1);
-
-        String wynik = "";
-        byte[] cipherBity = new byte[0];
-        boolean[] doSzyfrowania = new boolean[0];
-
-        if (!szyfrowanie) {
-            bity = Base64.getDecoder().decode(wiadomosc);
-        }
-
-        for (int i = 0; i < bity.length; i++) {
-            doSzyfrowania = concat(doSzyfrowania, doBitow(bity[i], 8));
-        }
-
-        boolean[][] grupa64Bitow = dzielNaGrupy(doSzyfrowania, 64);
-
-        for (int i = 0; i < grupa64Bitow.length; i++) {
-            cipherBity = concat(cipherBity, szyfruj(grupa64Bitow[i], klucz, szyfrowanie));
-        }
-
-
-
-        if (szyfrowanie) {
-            return Base64.getEncoder().encodeToString(cipherBity);
-        }
-        else{
-             wynik = new String(cipherBity, StandardCharsets.ISO_8859_1).replace("\0", "");
-        }
-
-        return wynik;
-    }
-
-    public void szyfrujPlik(String inputFile, String outputFile, byte[] key, boolean encrypt) throws IOException {
-        Path inputPath = Paths.get(inputFile);
-        Path outputPath = Paths.get(outputFile);
-
-        byte[] fileContent = Files.readAllBytes(inputPath);
-        byte[] processedContent;
-
-        if (encrypt) {
-            fileContent = dodajPadding(fileContent);
-            processedContent = szyfruj(fileContent, key, true);
-
+    public byte[] szyfrujBlok(byte[] blok, byte[] klucz, boolean szyfruj) {
+        if (szyfruj) {
+            return encrypt(blok, klucz);
         } else {
-            processedContent = szyfruj(fileContent, key, false);
-            processedContent = usunPadding(processedContent);
-
+            return decrypt(blok, klucz);
         }
-
-        Files.write(outputPath, processedContent);
     }
 
-    private byte[] dodajPadding(byte[] dane) {
-        int brakujaceBajty = 8 - (dane.length % 8);
-        byte[] daneZPaddingiem = new byte[dane.length + brakujaceBajty];
-        System.arraycopy(dane, 0, daneZPaddingiem, 0, dane.length);
-        for (int i = dane.length; i < daneZPaddingiem.length; i++) {
-            daneZPaddingiem[i] = (byte) brakujaceBajty;
+    public byte[] encrypt(byte[] plaintext, byte[] key) {
+        byte[][] subKeys = generateSubKeys(key);
+        byte[] ip = permute(plaintext, IP);
+
+        byte[] left = new byte[4];
+        byte[] right = new byte[4];
+        System.arraycopy(ip, 0, left, 0, 4);
+        System.arraycopy(ip, 4, right, 0, 4);
+
+        for (int i = 0; i < 16; i++) {
+            byte[] temp = right;
+            right = xor(left, feistel(right, subKeys[i]));
+            left = temp;
         }
-        return daneZPaddingiem;
+
+        byte[] ciphertext = concat(right, left);
+        return permute(ciphertext, FP);
     }
 
-    private byte[] usunPadding(byte[] dane) {
-        int iloscPaddingu = dane[dane.length - 1];
-        return Arrays.copyOfRange(dane, 0, dane.length - iloscPaddingu);
+    public  byte[] decrypt(byte[] ciphertext, byte[] key) {
+        byte[][] subKeys = generateSubKeys(key);
+        byte[] ip = permute(ciphertext, IP);
+
+        byte[] left = new byte[4];
+        byte[] right = new byte[4];
+        System.arraycopy(ip, 0, left, 0, 4);
+        System.arraycopy(ip, 4, right, 0, 4);
+
+        for (int i = 15; i >= 0; i--) {
+            byte[] temp = right;
+            right = xor(left, feistel(right, subKeys[i]));
+            left = temp;
+        }
+
+        byte[] plaintext = concat(right, left);
+        return permute(plaintext, FP);
+    }
+
+    private byte[] feistel(byte[] right, byte[] subKey) {
+        byte[] expanded = permute(right, EX);
+        byte[] xored = xor(expanded, subKey);
+        byte[] substituted = substitute(xored);
+        return permute(substituted, PBLOCK);
+    }
+
+    private byte[] permute(byte[] input, int[] table) {
+        byte[] output = new byte[table.length / 8];
+        for (int i = 0; i < table.length; i++) {
+            int bit = getBit(input, table[i] - 1);
+            setBit(output, i, bit);
+        }
+        return output;
+    }
+
+    private byte[] substitute(byte[] input) {
+        byte[] output = new byte[32];
+        for (int i = 0; i < 8; i++) {
+            int row = 2 * getBit(input, 6 * i) + getBit(input, 6 * i + 5);
+            int col = 8 * getBit(input, 6 * i + 1) + 4 * getBit(input, 6 * i + 2) +
+                    2 * getBit(input, 6 * i + 3) + getBit(input, 6 * i + 4);
+            int value = SBox[i][16 * row + col];
+            for (int j = 0; j < 4; j++) {
+                setBit(output, 4 * i + j, (value >> (3 - j)) & 1);
+            }
+        }
+        return output;
+    }
+
+    private byte[] xor(byte[] a, byte[] b) {
+        byte[] result = new byte[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = (byte) (a[i] ^ b[i]);
+        }
+        return result;
+    }
+
+    private int extractBit(byte[] data, int pos) {
+        int posByte = pos / 8;
+        int posBit = pos % 8;
+        byte tmpB = data[posByte];
+        int bit = tmpB >> (8 - (posBit + 1)) & 0x0001;
+        return bit;
+    }
+
+    private byte[] rotLeft(byte[] input, int len, int round) {
+        int nrBytes = (len - 1) / 8 + 1;
+        byte[] out = new byte[nrBytes];
+        for (int i = 0; i < len; i++) {
+            int val = extractBit(input, (i + round) % len);
+            setBit(out, i, val);
+        }
+        return out;
+    }
+
+    private byte[] extractBits(byte[] input, int position, int n) {
+        int numOfBytes = (n - 1) / 8 + 1;
+        byte[] out = new byte[numOfBytes];
+        for (int i = 0; i < n; i++) {
+            int val = extractBit(input, position + i);
+            setBit(out, i, val);
+        }
+        return out;
+
+    }
+
+    private byte[][] generateSubKeys(byte[] key) {
+        byte[][] tmp = new byte[16][];
+        byte[] tmpK = permute(key, PC1);
+
+        byte[] C = extractBits(tmpK, 0, PC1.length/2);
+        byte[] D = extractBits(tmpK, PC1.length/2, PC1.length/2);
+
+        for (int i = 0; i < 16; i++) {
+
+            C = rotLeft(C, 28, ShiftKey[i]);
+            D = rotLeft(D, 28, ShiftKey[i]);
+
+            byte[] cd = concatBits(C, 28, D, 28);
+
+            tmp[i] = permute(cd, PC2);
+        }
+
+        return tmp;
+    }
+
+    private byte[] concatBits(byte[] a, int aLen, byte[] b, int bLen) {
+        int numOfBytes = (aLen + bLen - 1) / 8 + 1;
+        byte[] out = new byte[numOfBytes];
+        int j = 0;
+        for (int i = 0; i < aLen; i++) {
+            int val = extractBit(a, i);
+            setBit(out, j, val);
+            j++;
+        }
+        for (int i = 0; i < bLen; i++) {
+            int val = extractBit(b, i);
+            setBit(out, j, val);
+            j++;
+        }
+        return out;
+    }
+
+    private byte[] concat(byte[] a, byte[] b) {
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
+
+    private int getBit(byte[] array, int position) {
+        int index = position / 8;
+        int bitPosition = 7 - (position % 8);
+        return (array[index] >> bitPosition) & 1;
+    }
+
+    private void setBit(byte[] array, int position, int value) {
+        int index = position / 8;
+        int bitPosition = 7 - (position % 8);
+        if (value == 1) {
+            array[index] |= (1 << bitPosition);
+        } else {
+            array[index] &= ~(1 << bitPosition);
+        }
+    }
+
+    public String bytesToHex(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        for (byte b : bytes) {
+            result.append(String.format("%02x", b));
+        }
+        return result.toString();
     }
 }

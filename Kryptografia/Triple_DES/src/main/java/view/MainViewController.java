@@ -53,9 +53,9 @@ public class MainViewController {
 
     @FXML
     private void onKeyGeneratorButtonClick() {
-        firstKey.setText("12345678");
-        secondKey.setText("ABCDEF12");
-        thirdKey.setText("1A2B3C4D");
+        firstKey.setText("D0BDC14308D2AC6C");
+        secondKey.setText("97176FC86C9ACD0B");
+        thirdKey.setText("DAD33DB08B49DD16");
     }
 
     @FXML
