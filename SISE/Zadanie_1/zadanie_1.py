@@ -3,13 +3,6 @@ import time
 from collections import deque
 from heapq import heappop, heappush
 
-SOLVED_BOARD = [
-    [1, 2, 3, 4],
-    [5, 6, 7, 8],
-    [9, 10, 11, 12],
-    [13, 14, 15, 0]
-]
-STARTING_BOARD = []
 MAX_DEPTH = 20
 
 
@@ -38,7 +31,7 @@ class HeuristicNode:
 class StatisticsModule:
     def __init__(self):
         self.visited_states = 0
-        self.closed_states = 0
+        self.processed_states = 0
         self.max_depth = 0
         self.time = 0
 
@@ -63,8 +56,8 @@ def bfs(start_node):
         if is_goal(current_board):
             end_time = time.time()
             stats.time = "{:.3f}".format(end_time - start_time)
-            stats.closed_states = len(closed_set)
-            stats.visited_states = stats.closed_states + len(queue)
+            stats.processed_states = len(closed_set)
+            stats.visited_states = stats.processed_states + len(queue)
             stats.max_depth = max_depth
             return (current_node, stats)
 
@@ -101,8 +94,8 @@ def dfs(start_node):
         if is_goal(current_board):
             end_time = time.time()
             stats.time = "{:.3f}".format(end_time - start_time)
-            stats.closed_states = len(closed_set)
-            stats.visited_states = stats.closed_states + len(stack)
+            stats.processed_states = len(closed_set)
+            stats.visited_states = stats.processed_states + len(stack)
             stats.max_depth = max_depth
             return (current_node, stats)
 
@@ -126,8 +119,8 @@ def dfs(start_node):
 
     end_time = time.time()
     stats.time = "{:.3f}".format(end_time - start_time)
-    stats.closed_states = len(closed_set)
-    stats.visited_states = stats.closed_states + len(stack)
+    stats.processed_states = len(closed_set)
+    stats.visited_states = stats.processed_states + len(stack)
     stats.max_depth = max_depth
     return None, stats
 
@@ -150,8 +143,8 @@ def a_star(start_node, heuristic_func):
         if is_goal(current_node.board):
             end_time = time.time()
             stats.time = "{:.3f}".format(end_time - start_time)
-            stats.closed_states = len(closed_set)
-            stats.visited_states = stats.closed_states + len(open_list)
+            stats.processed_states = len(closed_set)
+            stats.visited_states = stats.processed_states + len(open_list)
             stats.max_depth = max_depth
             return (current_node, stats)
 
@@ -179,8 +172,8 @@ def a_star(start_node, heuristic_func):
 
     end_time = time.time()
     stats.time = "{:.3f}".format(end_time - start_time)
-    stats.closed_states = len(closed_set)
-    stats.visited_states = stats.closed_states + len(open_list)
+    stats.processed_states = len(closed_set)
+    stats.visited_states = stats.processed_states + len(open_list)
     stats.max_depth = max_depth
     return None, stats
 
@@ -190,13 +183,13 @@ def a_star(start_node, heuristic_func):
 def manhattan_distance(node):
     total_distance = 0
 
-    for i in range(4):
-        for j in range(4):
+    for i in range(ROWS):
+        for j in range(COLS):
             current_tile = node.board[i][j]
             # Exclude the empty current_tile
             if current_tile != 0:
                 # Find the goal position of the current_tile
-                goal_row, goal_col = divmod(current_tile - 1, 4)
+                goal_row, goal_col = divmod(current_tile - 1, COLS)
                 # Calculate the Manhattan distance and add it to the total distance
                 total_distance += abs(i - goal_row) + abs(j - goal_col)
 
@@ -206,8 +199,8 @@ def manhattan_distance(node):
 def hamming_distance(node):
     h_score = 0
 
-    for i in range(4):
-        for j in range(4):
+    for i in range(len(SOLVED_BOARD)):
+        for j in range(len(SOLVED_BOARD[i])):
             # Skip the empty tile
             if node.board[i][j] == 0:
                 continue
@@ -251,7 +244,7 @@ def generate_moves(board, directions):
             moves.append(move)
 
         # Check DOWN move
-        elif direction == "D" and row < 3:
+        elif direction == "D" and row < len(board) - 1:
             new_board = [row[:] for row in board]
             new_board[row][column], new_board[row + 1][column] = new_board[row + 1][column], new_board[row][column]
             move = Node(new_board, parent=board, direction=direction)
@@ -265,13 +258,31 @@ def generate_moves(board, directions):
             moves.append(move)
 
         # Check RIGHT move
-        elif direction == "R" and column < 3:
+        elif direction == "R" and column < len(board[row]) - 1:
             new_board = [row[:] for row in board]
             new_board[row][column], new_board[row][column + 1] = new_board[row][column + 1], new_board[row][column]
             move = Node(new_board, parent=board, direction=direction)
             moves.append(move)
 
     return moves
+
+
+def generate_solved_board(rows, cols):
+    board = []
+    num = 1
+
+    for i in range(rows):
+        row = []
+        for j in range(cols):
+            if i == rows - 1 and j == cols - 1:
+                # Last cell should be empty (0)
+                row.append(0)
+            else:
+                row.append(num)
+                num += 1
+        board.append(row)
+
+    return board
 
 
 def read_start_board(file_name):
@@ -310,7 +321,7 @@ def save_statistics(solution_node, statistics, file_name):
     with open(file_name, "w") as file:
         file.write(solution_length + "\n")
         file.write(str(statistics.visited_states) + "\n")
-        file.write(str(statistics.closed_states) + "\n")
+        file.write(str(statistics.processed_states) + "\n")
         file.write(str(statistics.max_depth) + "\n")
         file.write(str(statistics.time) + "\n")
 
@@ -326,23 +337,33 @@ parser.add_argument('statistic_file')
 arguments = parser.parse_args()
 
 start_board = read_start_board(arguments.source_file)
+
+# Set ROWS, COLS and generate SOLVED_BOARD based on intput
+ROWS = len(start_board)
+COLS = len(start_board[0])
+SOLVED_BOARD = generate_solved_board(ROWS, COLS)
+
 start_node = Node(start_board, path=[start_board])
 
-# Set order
+# Call correct algorithm with given parameters
 if arguments.order == "hamm":
     NEIGHBOURS_ORDER = ["R", "D", "U", "L"]
     result = a_star(start_node, hamming_distance)
+
 elif arguments.order == "manh":
     NEIGHBOURS_ORDER = ["R", "D", "U", "L"]
     result = a_star(start_node, manhattan_distance)
+
 else:
     NEIGHBOURS_ORDER = [arguments.order[0], arguments.order[1], arguments.order[2], arguments.order[3]]
 
     if arguments.algorithm == "bfs":
         result = bfs(start_node)
+
     elif arguments.algorithm == "dfs":
         result = dfs(start_node)
 
+# Save solution and statistics
 solution_node = result[0]
 statistics = result[1]
 save_solution(solution_node, file_name=arguments.solution_file)
