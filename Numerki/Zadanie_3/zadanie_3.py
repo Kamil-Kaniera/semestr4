@@ -65,8 +65,24 @@ else:
     print("Niepoprawny wybór funkcji.")
     exit()
 
+# Wybór przedziału
 beginning = float(input("Podaj początek przedziału interpolacji: "))
 end = float(input("Podaj koniec przedziału interpolacji: "))
+
+x_range = np.linspace(beginning, end, 1000)
+
+# Obliczanie wartości oryginalnej funkcji
+original_values = function(x_range)
+
+# Rysowanie wykresu oryginalnej funkcji
+plt.plot(x_range, original_values)
+plt.title("Funkcja oryginalna")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.grid(True)
+plt.show()
+
+# Wybór liczby węzłów
 number_of_nodes = int(input("Podaj liczbę węzłów interpolacyjnych: "))
 
 # Generowanie węzłów interpolacji
@@ -76,7 +92,6 @@ interpolation_nodes = equidistant_nodes(beginning, end, number_of_nodes)
 function_values = function(interpolation_nodes)
 
 # Interpolacja Lagrange'a
-x_range = np.linspace(beginning, end, 1000)
 interpolated_values = []
 interpolating_polynomial = ""
 
@@ -86,13 +101,11 @@ for x in x_range:
 
 print("\nf(x) = ", interpolating_polynomial, "\n")
 
-# Obliczanie wartości oryginalnej funkcji
-original_values = function(x_range)
 
 # Rysowanie wykresu
 plt.plot(x_range, original_values, label="Funkcja oryginalna")
 plt.plot(x_range, interpolated_values, label="Wielomian interpolacyjny")
-plt.scatter(interpolation_nodes, function_values, color='red', label="Węzły interpolacji")
+plt.scatter(interpolation_nodes, function_values, color='red', label="Węzły interpolacji", facecolors='none')
 plt.legend()
 plt.xlabel("x")
 plt.ylabel("y")
