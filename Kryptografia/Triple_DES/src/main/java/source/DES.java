@@ -189,7 +189,7 @@ public class DES {
     }
 
     private byte[] substitute(byte[] input) {
-        byte[] output = new byte[32];
+        byte[] output = new byte[4];
         for (int i = 0; i < 8; i++) {
             int row = 2 * extractBit(input, 6 * i) + extractBit(input, 6 * i + 5);
             int col = 8 * extractBit(input, 6 * i + 1) + 4 * extractBit(input, 6 * i + 2) +
