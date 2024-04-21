@@ -44,12 +44,10 @@ public class TripleDES {
         byte[] processedContent = new byte[0];
 
         if (encrypt) {
-//            fileContent = dodajPadding(fileContent);
             processedContent = tripleSzyfruj(fileContent, key1, key2, key3);
 
         } else {
             processedContent = tripleDeszyfruj(fileContent, key1, key2, key3);
-//            processedContent = usunPadding(processedContent);
         }
 
         Files.write(outputPath, processedContent);
