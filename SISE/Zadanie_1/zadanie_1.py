@@ -108,9 +108,9 @@ def dfs(start_node):
             moves = generate_moves(current_board, NEIGHBOURS_ORDER)
             moves.reverse()
             for next_board in moves:
-                # Check if the next board configuration has not been closed_set
+                # Check if the next board configuration has not been in closed_set
                 if tuple(map(tuple, next_board.board)) not in closed_set:
-                    # Add not closed_set node to the queue
+                    # Add not closed_set node to the stack
                     next_node = Node(next_board.board, current_node.parent, current_node.path + [next_board.board],
                                      current_node.direction + str(next_board.direction))
                     stack.append((next_node, depth + 1))
@@ -148,12 +148,12 @@ def a_star(start_node, heuristic_func):
             stats.max_depth = max_depth
             return (current_node, stats)
 
-        # Convert the current board to a tuple of tuples and add it to the visited set
+        # Convert the current board to a tuple of tuples and add it to the closed set
         closed_set.add(tuple(map(tuple, current_node.board)))
 
         # Generate all possible moves
         for next_board in generate_moves(current_node.board, NEIGHBOURS_ORDER):
-            # Check if the next board configuration has not been visited
+            # Check if the next board configuration has not been in closed_set
             if tuple(map(tuple, next_board.board)) not in closed_set:
                 # Calculate the path cost from the start node to the current node
                 g_score = len(current_node.path)
@@ -292,7 +292,6 @@ def read_start_board(file_name):
         # Read the dimensions of the board (first line)
         dimensions = file.readline().split()
         rows = int(dimensions[0])
-        cols = int(dimensions[1])
 
         # Read each subsequent line and parse the numbers
         for _ in range(rows):
