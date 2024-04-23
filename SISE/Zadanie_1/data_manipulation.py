@@ -33,8 +33,13 @@ def plot_function(given_data, ylabel, title, category):
     plt.title(title)
     plt.rcParams.update({'font.size': 14})
     # plt.yscale("log")
+
+    ax = plt.gca()
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.yaxis.set_minor_locator(AutoLocator())
+
     plt.legend(title='Order')
-    plt.grid(True, which='both')  # Show both horizontal and vertical gridlines
+    plt.grid(True, which='major')  # Show both horizontal and vertical gridlines
     plt.legend(title='Order', bbox_to_anchor=(0.995, 1), loc='upper left')
     plt.tight_layout()
     plt.savefig(f"{category}_{title}.png".replace("*", "str"))
@@ -61,6 +66,10 @@ def plot_function_all(given_data, ylabel, category):
 
     # Set font size for tick labels on the y-axis
     ax.tick_params(axis='y', labelsize=12)
+
+    ax = plt.gca()
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.yaxis.set_minor_locator(AutoLocator())
 
     # plt.yscale("log")
     plt.tight_layout()
