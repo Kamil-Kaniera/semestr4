@@ -77,7 +77,7 @@ namespace zad1
         
         public void Checking(int[,] matrixH, string encodedFileName, string decodedFileName)
         {
-            using (StreamReader encoded = new StreamReader(encodedFileName))
+            using (FileStream encoded = new FileStream(encodedFileName, FileMode.Open))
             using (StreamWriter decoded = new StreamWriter(decodedFileName, false))
             {
                 int[] encodedArray = new int[ByteInBits * 2];
@@ -85,24 +85,36 @@ namespace zad1
                 int counter = 0;
                 int errorCounter = 0;
 
+                int[] encodedBytes = new int[2];
                 while (true)
                 {
-                    int symbol = encoded.Read();
-                    if (symbol == -1)
+                    encodedBytes[counter] = encoded.ReadByte();
+                    if (encodedBytes[counter] == -1)
                         break;
+                    
+                    counter++;
+                    
+                   
+                    if (counter == 2)
+                    {
+                        // Funkcja do konwersji int na bit
+                        Func<int, int[]> IntToBits = (value) =>
+                        {
+                            int[] bits = new int[ByteInBits];
+                            for (int i = ByteInBits - 1; i >= 0; i--)
+                            {
+                                bits[i] = value % 2;
+                                value /= 2;
+                            }
+                            return bits;
+                        };
 
-                    if (symbol == 13)  // Sprawdzanie dla znaku CR
-                    {
-                        continue;  // Ignoruj znak CR i przejdź do następnego symbolu
-                    }
-    
-                    if (symbol != 10)  // Sprawdzanie dla znaku LF
-                    {
-                        encodedArray[counter] = symbol - 48;
-                        counter++;
-                    }
-                    else
-                    {
+                        int[] bits1 = IntToBits(encodedBytes[0]);
+                        int[] bits2 = IntToBits(encodedBytes[1]);
+
+                        Array.Copy(bits1, encodedArray, ByteInBits);
+                        Array.Copy(bits2, 0, encodedArray, ByteInBits, ByteInBits);
+
                         // Obliczenie kontrolnego ciągu bitów dla otrzymanych danych
                         for (int i = 0; i < ByteInBits; i++)
                         {

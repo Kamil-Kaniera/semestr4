@@ -76,7 +76,7 @@ namespace zad1
 
         ErrorCorrectingCode errorCorrectingCodeObj = new ErrorCorrectingCode();
 
-        errorCorrectingCodeObj.Checking(matrixH, "coded.txt", "decoded.txt");
+        errorCorrectingCodeObj.Checking(matrixH, "codedString.txt", "decoded.txt");
         Console.WriteLine("Plik odkodowany pomyślnie.");
     }
 
