@@ -77,8 +77,8 @@ namespace zad1
         
         public void Checking(int[,] matrixH, string encodedFileName, string decodedFileName)
         {
-            using (StreamReader encoded = new StreamReader(encodedFileName, Encoding.UTF8))
-            using (StreamWriter decoded = new StreamWriter(decodedFileName, false, Encoding.UTF8))
+            using (StreamReader encoded = new StreamReader(encodedFileName))
+            using (StreamWriter decoded = new StreamWriter(decodedFileName, false))
             {
                 int[] encodedArray = new int[ByteInBits * 2];
                 int[] errorArray = new int[ByteInBits];
