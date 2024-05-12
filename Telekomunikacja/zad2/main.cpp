@@ -9,22 +9,23 @@
 #define EOT 0x04  // End of Transmission - sygnalizuje zakonczenie transmisji danych
 #define ACK 0x06  // Acknowledgment - potwierdza poprawny odbior blokow danych
 #define NAK 0x15  // Negative Acknowledgment
-#define C 'C'     // Transmission initialization by receiver - sluzy do inicjacji transmisji przez odbiornik
+#define C   0x43  // Transmission initialization by receiver - sluzy do inicjacji transmisji przez odbiornik
 #define SUB 26    // Substitution character - sluzy on jako wypelniacz/dopelnienie w blokach danych
 
 using namespace std;
 
 //################## SYSTEMOWE ZMIENNE GLOBALNE   #############################
-HANDLE handleCom;
-BOOL isReadyPort;
-DCB controlDCB;
-COMMTIMEOUTS objCommtime;
+HANDLE handleCom;           // Handle do portu szeregowego
+BOOL isReadyPort;           // Flaga informująca o gotowości portu
+DCB controlDCB;             // Ustawienia portu szeregowego
+COMMTIMEOUTS objCommtime;   // Ustawienia czasowe portu szeregowego
 
-int BaudRate = 9600;
-bool CRC;             // CRC wybor
-char COM[10];         // Nazwa portu szeregowego
-char fileToSend[100]; // Nazwa pliku wysyłanego
-char fileToSave[100]; // Nazwa pliku do zapisania
+int BaudRate = 9600;        // Szybkość transmisji danych
+bool CRC;                    // Wybór CRC (Cyclic Redundancy Check)
+char COM[10];                // Nazwa portu szeregowego
+char fileToSend[100];        // Nazwa pliku do wysłania
+char fileToSave[100];        // Nazwa pliku do zapisania
+
 
 template<typename Type>                 // funkcja szablonowa do sprawdzenia, czy zostaly podane odpowiednie dane
 void isCorrect(Type &variable) {
@@ -69,146 +70,173 @@ void sendCOM(char *sign, int length) {          // wysylanie danych przez port s
     WriteFile(handleCom, sign, length, &num, NULL);
 }
 
-short int CRC16(char *fileBuffer) {                         // obliczanie sumy kontrolnej crc16
-    int tmp = 0, val = 0x18005 << 15;                       // val - 17 bitow
-    for (int i = 0; i < 3; i++) {                           //przetwarzanie pierwszych 3 bajtow danych z bufora
-        tmp = tmp * 256 + (unsigned char) fileBuffer[i];    //zawartosc bajtow jest dodawana do zmiennej tmp
-    }
-    tmp *= 256;                                     // przesuniecie o 8 bitow, bajt
 
-    for (int i = 3; i < 134; i++) {                 // przetwarzanie pozostalych bajtow bloku danych
-        if (i < 128) {
-            tmp += (unsigned char) fileBuffer[i];   // jesli znajduje sie w zakresie danych, jest dodawany do zmiennej tmp
-        }
-        for (int j = 0; j < 8; j++) {       // przetwarza kazdy bit bajtu
-            if (tmp & (1 << 31)) {          // jesli najabrdziej znaczacy bit jest ustawiony,
-                tmp ^= val;                 // dochodzi do XORowania
+// Funkcja do obliczania CRC16
+short int CRC16(char *fileBuffer) {
+    short unsigned int crc = 0xFFFF; // Początkowa wartość CRC
+    const unsigned int CRC16_POLY = 0x18005; // 0x8005 przesunięte o 15 miejsc w lewo
+
+
+    for (int i = 0; i < 128; ++i) {
+        crc ^= static_cast<unsigned short >(fileBuffer[i]) << 8; // XOR bajtu danych z CRC
+
+        for (int j = 0; j < 8; ++j) {
+            if (crc & 0x8000) {
+                crc = (crc << 1) ^ CRC16_POLY; // Jeśli najbardziej znaczący bit jest ustawiony, wykonaj XOR z przesuniętym polinomem CRC16
+            } else {
+                crc <<= 1;
             }
-            tmp <<= 1;                      // przesuniecie bitowe o jedno miejsce
         }
     }
-    return tmp >> 16;                       // zwraca 16 bitowa sume kontrolna crc dla bloku danych
+
+    return static_cast<short int>(crc);
 }
 
-void receiving() {                      //otrzymywanie danych
-    char buf[3], fileBuffer[128];
+void receiving() { // Funkcja odbierania danych
+    char buf[3], fileBuffer[128]; // Bufory do przechowywania danych
 
-    cout << "Enter the file name to save: ";
+    cout << "Podaj nazwe pliku do zapisu: "; // Prośba o wprowadzenie nazwy pliku do zapisu
     cin.getline(fileToSave, 100);
 
-    initialize(COM);                    //inicjalizacja portu
+    initialize(COM); // Inicjalizacja portu szeregowego
 
-    buf[0] = CRC ? C : NAK;             //Ustawienie znaku NAK, jeśli używane jest CRC, lub znaku C, jeśli nie jest używane CRC.
-    sendCOM(buf, 1);                    //wyslanie odpowiedniego znaku
+    buf[0] = CRC ? C : NAK; // Ustawienie znaku NAK, jeśli używane jest CRC, lub znaku C, jeśli nie jest używane CRC.
+    sendCOM(buf, 1); // Wysłanie odpowiedniego znaku
 
-    FILE *f = fopen(fileToSave, "wb");
+    FILE *f = fopen(fileToSave, "wb"); // Otwarcie pliku do zapisu w trybie binarnym
 
-    receiveCOM(buf, 1);                 //otrzymanie pierwszego znaku odnosnie crc
-    while (true) {
-        unsigned short sum, sumc;       // nastepuje odbieranie danych w petli
-        receiveCOM(buf + 1, 2);         //odebranie danych
-        receiveCOM(fileBuffer, 128);    //odebranie danych
+    receiveCOM(buf, 1); // Odbiór pierwszego znaku dotyczącego CRC
+    while (true) { // Pętla nieskończona
+        unsigned short sum, sumc; // Zmienne przechowujące sumy kontrolne
 
-        sum = sumc = 0;
-        receiveCOM((char *) &sum, CRC ? 2 : 1);     //odebranie danych
+        receiveCOM(buf + 1, 2); // Odbiór danych nagłówka
+        receiveCOM(fileBuffer, 128); // Odbiór danych bloku
 
-        if (CRC) {
-            sumc = CRC16(fileBuffer);
-        } else {
+        sum = sumc = 0; // Zerowanie sum kontrolnych
+
+        receiveCOM((char *) &sum, CRC ? 2 : 1); // Odbiór sumy kontrolnej
+
+        if (CRC) { // Jeśli używane jest CRC
+            sumc = CRC16(fileBuffer); // Obliczenie sumy kontrolnej dla otrzymanego bloku danych
+        } else { // Jeśli CRC nie jest używane
             for (int i = 0; i < 128; i++) {
-                sumc += (unsigned char) fileBuffer[i];
+                sumc += (unsigned char) fileBuffer[i]; // Obliczenie sumy kontrolnej dla otrzymanego bloku danych
             }
-            sumc %= 256;
+            sumc %= 256; // Ustalenie wartości modulo 256
         }
 
-        if (sum != sumc) {
-            buf[0] = NAK;
+        if (sum != sumc) { // Sprawdzenie, czy sumy kontrolne się zgadzają
+            buf[0] = NAK; // Jeśli nie, wysłanie NAK
             sendCOM(buf, 1);
             continue;
         }
 
-        buf[0] = ACK;
+        buf[0] = ACK; // Wysłanie potwierdzenia (ACK) odbioru bloku danych
         sendCOM(buf, 1);
 
-        receiveCOM(buf, 1);
-        if (buf[0] == EOT) {
+        receiveCOM(buf, 1); // Odbiór kolejnego znaku
+
+        if (buf[0] == EOT) { // Jeśli otrzymano sygnał EOT (koniec transmisji)
             unsigned char last = 127;
-            while (fileBuffer[last] == SUB) {
+            while (fileBuffer[last] == SUB) { // Znajdź ostatni niepusty bajt w buforze danych
                 last--;
             }
-            fwrite(fileBuffer, last + 1, 1, f);
-            break;
+            fwrite(fileBuffer, last + 1, 1, f); // Zapisz dane do pliku
+            break; // Zakończ pętlę
         }
-        fwrite(fileBuffer, 128, 1, f);
+        fwrite(fileBuffer, 128, 1, f); // Zapisz dane do pliku
     }
-    fclose(f);
-    buf[0] = ACK;
+    fclose(f); // Zamknięcie pliku
+    buf[0] = ACK; // Wysłanie potwierdzenia odbioru całego pliku (ACK)
     sendCOM(buf, 1);
 }
 
-void sending() {
-    char buf[3], fileBuffer[128];
 
-    cout << "Enter the file name to send: ";
+
+void sending() {
+    char buf[3], fileBuffer[128]; // Bufory do przechowywania danych do wysłania
+
+    // Prośba użytkownika o wprowadzenie nazwy pliku do wysłania
+    cout << "Podaj nazwe pliku do wyslania: ";
     cin.getline(fileToSend, 100);
 
+    // Inicjalizacja portu szeregowego
     initialize(COM);
 
+    // Odbieranie początkowej odpowiedzi od odbiorcy
     receiveCOM(buf, 1);
+
+    // Określenie, czy należy używać CRC na podstawie otrzymanej odpowiedzi
     if (buf[0] == NAK) {
         CRC = false;
     } else if (buf[0] == C) {
         CRC = true;
     } else {
+        // Jeśli otrzymana odpowiedź nie jest ani NAK, ani C, zakończ funkcję
         return;
     }
 
-    int no = 1;
-    FILE *f = fopen(fileToSend, "rb");
-    fseek(f, 0, SEEK_END);
-    int fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
+    int no = 1; // Inicjalizacja numeru bloku
+    FILE *f = fopen(fileToSend, "rb"); // Otwarcie pliku do odczytu
+    fseek(f, 0, SEEK_END); // Przesunięcie wskaźnika pliku na koniec pliku w celu określenia jego rozmiaru
+    int fsize = ftell(f); // Pobranie rozmiaru pliku
+    fseek(f, 0, SEEK_SET); // Przesunięcie wskaźnika pliku z powrotem na początek pliku
 
+    // Pętla, dopóki cały plik nie zostanie odczytany i wysłany
     while (ftell(f) < fsize) {
+        // Odczyt danych z pliku do bufora pliku
         unsigned char length = fread(fileBuffer, 1, 128, f);
+
+        // Uzupełnienie pozostałej przestrzeni w buforze znakami SUB
         for (int i = length; i < 128; i++) {
             fileBuffer[i] = SUB;
         }
-        unsigned short sum = 0;
 
-        sum = 0;
+        unsigned short sum = 0; // Inicjalizacja sumy kontrolnej
 
+        // Obliczenie sumy kontrolnej w zależności od tego, czy CRC jest włączone
         if (CRC) {
             sum = CRC16(fileBuffer);
         } else {
-            for (int i = 0; i < 128; i++)
+            for (int i = 0; i < 128; i++) {
                 sum += (unsigned char) fileBuffer[i];
+            }
             sum %= 256;
         }
 
+        // Przygotowanie nagłówka dla bloku danych
         buf[0] = SOH;
         buf[1] = no;
         buf[2] = 255 - no;
 
+        // Wysłanie nagłówka, bloku danych i sumy kontrolnej
         sendCOM(buf, 3);
         sendCOM(fileBuffer, 128);
         sendCOM((char *) &sum, CRC ? 2 : 1);
 
+        // Odbiór potwierdzenia od odbiorcy
         receiveCOM(buf, 1);
+
+        // Jeśli otrzymano potwierdzenie, zwiększ numer bloku
         if (buf[0] == ACK) {
             no++;
         } else {
+            // Jeśli potwierdzenie nie zostało otrzymane, przewiń wskaźnik pliku wstecz
             fseek(f, -128, SEEK_CUR);
         }
     }
 
+    // Zamknięcie pliku
     fclose(f);
+
+    // Wysłanie sygnału końca transmisji (EOT)
     do {
         buf[0] = EOT;
         sendCOM(buf, 1);
         receiveCOM(buf, 1);
-    } while (buf[0] != ACK);
+    } while (buf[0] != ACK); // Powtarzaj, dopóki nie zostanie otrzymane potwierdzenie
 }
+
 
 static void ShowAuthors()
 {
@@ -252,20 +280,20 @@ int main() {
         case 5: strcpy(COM, "COM5"); break;
     }
 
-    int crc_option;
-    do {
-        cout << "Czy chcesz użyć algorytmu CRC: \n"
-                "1. Tak\n"
-                "2. Nie\n"
-                "Opcja: ";
-        isCorrect(crc_option);
-    } while (!(crc_option == 1 || crc_option == 2));
-
-    CRC = crc_option == 1;
 
     switch (wybor) {
         case 1: sending(); break;
-        case 2: receiving(); break;
+        case 2:
+            int crc_option;
+            do {
+                cout << "Czy chcesz uzyc algorytmu CRC: \n"
+                        "1. Tak\n"
+                        "2. Nie\n"
+                        "Opcja: ";
+                isCorrect(crc_option);
+            } while (!(crc_option == 1 || crc_option == 2));
+            CRC = crc_option == 1;
+            receiving(); break;
     }
 
     return 0;
