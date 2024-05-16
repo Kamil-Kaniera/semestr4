@@ -100,12 +100,12 @@ void receiving() { // Funkcja odbierania danych
 
     initialize(COM); // Inicjalizacja portu szeregowego
 
-    buf[0] = CRC ? C : NAK; // Ustawienie znaku NAK, jeśli używane jest CRC, lub znaku C, jeśli nie jest używane CRC.
+    buf[0] = CRC ? C : NAK; // Ustawienie znaku C, jeśli używane jest CRC, lub znaku NAK, jeśli nie jest używane CRC.
     sendCOM(buf, 1); // Wysłanie odpowiedniego znaku
 
     FILE *f = fopen(fileToSave, "wb"); // Otwarcie pliku do zapisu w trybie binarnym
 
-    receiveCOM(buf, 1); // Odbiór pierwszego znaku dotyczącego CRC
+    receiveCOM(buf, 1); // Odbiór pierwszego znaku SOH
     while (true) { // Pętla nieskończona
         unsigned short sum, sumc; // Zmienne przechowujące sumy kontrolne
 
