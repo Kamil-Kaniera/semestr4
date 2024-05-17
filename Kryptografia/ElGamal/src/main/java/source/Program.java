@@ -1,92 +1,61 @@
 package source;
+
+import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
 
 public class Program {
-    public static void main(String[] args) {
-        byte[] klucz = {26, 4, 0, 56, 17, 0, 0, 3};
+    public static void main(String[] args) throws IOException {
+        // Ustalanie wartości kluczy
+//        BigInteger p = new BigInteger("2f97d5337311f0f636d6a8b42469803bc727ad37bd42b49d2f85649e5292960c119541e458cf86da911db89aaf8686bf5b1e9b816f93a016680954f5e017790c5", 16);
+//        BigInteger g = new BigInteger("3a3880c02e19b9a192593f822895d60f41b0c201bc93240d27a5ec2950c9a56886e08904e459a6ae3a7da6bcf4ba800d4ff89bfe0e241ddaac81a07ba49968a9", 16);
+//        BigInteger h = new BigInteger("1f199a89eabf7c855f680e735aac9b0caaefd95005a3241c2b508b6db93716d067968e7e2465690bc3f54d520c05589899e282d9ec6f11be06818da65b6c3a487", 16);
+//        BigInteger a = new BigInteger("5c56902faaae6e686d540907bc0a03d0256d1b9528a111b6b0ea64cd235ed6524aebb70b436cb8ece59acad6a1da66b42b651b18d8f64159fd7d3923fc6121ae", 16);
 
-//        DES obiekt = new DES();
-//
-//        Scanner scanner = new Scanner(System.in);
-//
-//        System.out.print("Podaj tekst do zaszyfrowania: ");
-//        String message = scanner.nextLine();
-//        scanner.close();
-//
-//        String zaszyfrowane = obiekt.szyfruj(message, klucz, true);
-//        System.out.println("Zaszyfrowane: " + zaszyfrowane);
-//
-//        String odszyfrowane = obiekt.szyfruj(zaszyfrowane, klucz, false);
-//        System.out.println("Odszyfrowane: " + odszyfrowane);
-//
-//
-//        TripleDES tripleDes = new TripleDES();
-//        byte[] key1 = "12345678".getBytes(); // 8-byte key for DES1
-//        byte[] key2 = "abcdefgh".getBytes(); // 8-byte key for DES2
-//        byte[] key3 = "ijklmnop".getBytes(); // 8-byte key for DES3
-//        byte[] message3 = "Hello, Triple DES!".getBytes(StandardCharsets.ISO_8859_1);
-//
-//        // Triple Encrypt
-//        byte[] encrypted = tripleDes.tripleSzyfruj(message3, key1, key2, key3);
-//        System.out.println("Triple Encrypted: " + new String(encrypted, StandardCharsets.ISO_8859_1));
-//
-//        // Triple Decrypt
-//        byte[] decrypted = tripleDes.tripleDeszyfruj(encrypted, key1, key2, key3);
-//        System.out.println("Triple Decrypted: " + new String(decrypted, StandardCharsets.ISO_8859_1).replace("\0", ""));
-//
-//
-////        // Pliki DES
-////        DES des = new DES();
-////        byte[] key = "12345678".getBytes(StandardCharsets.ISO_8859_1);  // Replace with your DES key
-////        String inputFilePath = Program.class.getClassLoader().getResource("input.txt").getPath();
-////
-////        try {
-////            // Encrypt file
-////            des.szyfrujPlik(inputFilePath, "encrypted.txt", key, true);
-////
-////            // Decrypt file
-////            des.szyfrujPlik("encrypted.txt", "decrypted.txt", key, false);
-////        } catch (IOException e) {
-////            e.printStackTrace();
-////        }
-////
-////        String inputPhotoFilePath = Program.class.getClassLoader().getResource("input_photo.webp").getPath();
-////
-////        try {
-////            // Encrypt photo file
-////            des.szyfrujPlik(inputPhotoFilePath, "encrypted_photo.webp", key, true);
-////
-////            // Decrypt photo file
-////            des.szyfrujPlik("encrypted_photo.webp", "decrypted_photo.webp", key, false);
-////        } catch (IOException e) {
-////            e.printStackTrace();
-////        }
-//
-//        //Pliki TrippleDES
-//        TripleDES tripleDesFile = new TripleDES();
-//        byte[] key1_3D = "12345678".getBytes(StandardCharsets.ISO_8859_1);  // Replace with your Triple DES key part 1
-//        byte[] key2_3D = "87654321".getBytes(StandardCharsets.ISO_8859_1);  // Replace with your Triple DES key part 2
-//        byte[] key3_3D = "23456789".getBytes(StandardCharsets.ISO_8859_1);  // Replace with your Triple DES key part 3
-//
-//        String inputFilePath_3D = Program.class.getClassLoader().getResource("input.txt").getPath();
-//        String inputPhotoFilePath_3D = Program.class.getClassLoader().getResource("input_photo.webp").getPath();
-//
-//        try {
-//            // Encrypt file
-//            tripleDesFile.tripleSzyfrujPlik(inputFilePath_3D, "encrypted_3D.txt", key1_3D, key2_3D, key3_3D, true);
-//
-//            // Decrypt file
-//            tripleDesFile.tripleSzyfrujPlik("encrypted_3D.txt", "decrypted_3D.txt", key1_3D, key2_3D, key3_3D, false);
-//
-//            // Encrypt photo file
-//            tripleDesFile.tripleSzyfrujPlik(inputPhotoFilePath_3D, "encrypted_photo_3D.webp", key1_3D, key2_3D, key3_3D, true);
-//
-//            // Decrypt photo file
-//            tripleDesFile.tripleSzyfrujPlik("encrypted_photo_3D.webp", "decrypted_photo_3D.webp", key1_3D, key2_3D, key3_3D, false);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        BigInteger p = new BigInteger("101");
+        BigInteger g = new BigInteger("3");
+        BigInteger h = new BigInteger("9");
+        BigInteger a = new BigInteger("2");
+
+
+        // Tworzenie instancji ElGamal z podanymi wartościami
+        ElGamal elGamal = new ElGamal(p, g, h, a);
+
+        BigInteger m = BigInteger.valueOf(120);
+
+
+        BigInteger[] encrypted = elGamal.encrypt(m);
+
+        System.out.println("Zaszyfrowana wiadomość: ");
+        System.out.println("c1: " + encrypted[0] + ", c2: " + encrypted[1]);
+
+        BigInteger decrypted = elGamal.decrypt(encrypted);
+
+        System.out.println("Odszyfrowana wiadomość: " + decrypted);
+
+        // Wyświetlenie kluczy
+        System.out.println("Public Key (p, g, h): (" + elGamal.getP() + ", " + elGamal.getG() + ", " + elGamal.getH() + ")");
+        System.out.println("Private Key (a): " + elGamal.getA());
+
+
+        // Tworzenie instancji ElGamal
+
+        // Przygotowanie wiadomości do szyfrowania
+        String  messageString = "dupa";
+        byte[] message = messageString.getBytes(StandardCharsets.ISO_8859_1);
+
+        // Szyfrowanie wiadomości
+        byte[] encryptedMessage = elGamal.encryptBytes(message);
+        System.out.println("Zaszyfrowana wiadomość: " + Arrays.toString(encryptedMessage));
+
+        // Deszyfrowanie wiadomości
+        byte[] decryptedMessage = elGamal.decryptBytes(encryptedMessage);
+        String decryptedString = new String(decryptedMessage, StandardCharsets.ISO_8859_1);
+      ;
+        System.out.println("Odszyfrowana wiadomość: " +   decryptedString);
     }
 }

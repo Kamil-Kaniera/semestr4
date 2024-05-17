@@ -5,7 +5,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-import source.TripleDES;
+import source.ElGamal;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -55,9 +55,11 @@ public class MainViewController {
 
     @FXML
     private void onKeyGeneratorButtonClick() {
-        publicKeyG.setText("D0BDC14308D2AC6C");
-        publicKeyH.setText("97176FC86C9ACD0B");
-        privateKeyA.setText("DAD33DB08B49DD16");
+        ElGamal elGamal = new ElGamal(2048);
+        publicKeyG.setText(elGamal.getG().toString(16));
+        publicKeyH.setText(elGamal.getH().toString(16));
+        privateKeyA.setText(elGamal.getA().toString(16));
+        modN.setText(elGamal.getP().toString(16));
     }
 
     @FXML
@@ -83,74 +85,74 @@ public class MainViewController {
     @FXML
     private void onEncryptButtonClick(){
         message.setText("");
-        byte[] key1 = hexStringToByteArray(publicKeyG.getText());
-        byte[] key2 = hexStringToByteArray(publicKeyH.getText());
-        byte[] key3 = hexStringToByteArray(privateKeyA.getText());
-        byte[] mod = hexStringToByteArray(modN.getText());
+        byte[] g = hexStringToByteArray(publicKeyG.getText());
+        byte[] h = hexStringToByteArray(publicKeyH.getText());
+        byte[] a = hexStringToByteArray(privateKeyA.getText());
+        byte[] p = hexStringToByteArray(modN.getText());
 
-        if (toggleStatus == STATUS.WINDOW) encryptWindow(key1, key2, key3);
-        else if (toggleStatus == STATUS.FILE) encryptFile(key1, key2, key3, getFileExtension(chosenPathPlainText));
+        if (toggleStatus == STATUS.WINDOW) encryptWindow(p, g, h, a);
+        else if (toggleStatus == STATUS.FILE) encryptFile(p, g, h, a, getFileExtension(chosenPathPlainText));
     }
 
     @FXML
     private void onDecryptButtonClick() {
         message.setText("");
-        byte[] key1 = hexStringToByteArray(publicKeyG.getText());
-        byte[] key2 = hexStringToByteArray(publicKeyH.getText());
-        byte[] key3 = hexStringToByteArray(privateKeyA.getText());
-        byte[] mod = hexStringToByteArray(modN.getText());
+        byte[] g = hexStringToByteArray(publicKeyG.getText());
+        byte[] h = hexStringToByteArray(publicKeyH.getText());
+        byte[] a = hexStringToByteArray(privateKeyA.getText());
+        byte[] p = hexStringToByteArray(modN.getText());
 
 
 
-        if (toggleStatus == STATUS.WINDOW) decryptWindow(key1, key2, key3);
-        else if (toggleStatus == STATUS.FILE) decryptFile(key1, key2, key3, getFileExtension(chosenPathCryptogram));
+        if (toggleStatus == STATUS.WINDOW) decryptWindow(p, g, h, a);
+        else if (toggleStatus == STATUS.FILE) decryptFile(p, g, h, a, getFileExtension(chosenPathCryptogram));
     }
 
 //-------------------------------------------------WINDOW-------------------------------------------------
-    private void encryptWindow(byte[] key1,  byte[] key2,  byte[] key3) {
+    private void encryptWindow(byte[] p,  byte[] g,  byte[] h,  byte[] a) {
         cryptogram.setText("Szyfrowanie...");
 
         byte[] message =  plainText.getText().getBytes(StandardCharsets.ISO_8859_1);
 
-        TripleDES tripleDes = new TripleDES();
+        ElGamal elGamal = new ElGamal(p, g, h, a);
 
-        byte[] encrypted = tripleDes.tripleSzyfruj(message, key1, key2, key3);
+        byte[] encrypted = elGamal.encryptBytes(message);
 
         String encryptedText = byteArrayToHexString(encrypted);
 
         cryptogram.setText(encryptedText);
     }
 
-    private void decryptWindow(byte[] key1,  byte[] key2,  byte[] key3) {
+    private void decryptWindow(byte[] p,  byte[] g,  byte[] h, byte[] a) {
         plainText.setText("Odszyfrowanie...");
 
         byte[] encrypted = hexStringToByteArray(cryptogram.getText());
 
-        TripleDES tripleDes = new TripleDES();
+        ElGamal elGamal = new ElGamal(p, g, h, a);
 
-        byte[] decrypted = tripleDes.tripleDeszyfruj(encrypted, key1, key2, key3);
+        byte[] decrypted = elGamal.decryptBytes(encrypted);
 
         plainText.setText(new String(decrypted, StandardCharsets.ISO_8859_1).replace("\0", ""));
     }
 
 
 //-------------------------------------------------File-------------------------------------------------
-    private void encryptFile(byte[] key1,  byte[] key2,  byte[] key3, String fileExtension) {
-        TripleDES tripleDes = new TripleDES();
+    private void encryptFile(byte[] p,  byte[] g,  byte[] h,  byte[] a,  String fileExtension) {
+        ElGamal elGamal = new ElGamal(p, g, h, a);
 
         try {
-            tripleDes.tripleSzyfrujPlik(chosenPathPlainText, "encrypted_file." + fileExtension, key1, key2, key3, true);
+            elGamal.encryptFile(chosenPathPlainText, "encrypted_file." + fileExtension);
             message.setText("Plik pomyślnie zapisany");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void decryptFile(byte[] key1,  byte[] key2,  byte[] key3, String fileExtension) {
-        TripleDES tripleDes = new TripleDES();
+    private void decryptFile(byte[] p,  byte[] g,  byte[] h, byte[] a,  String fileExtension) {
+        ElGamal elGamal = new ElGamal(p, g, h, a);
 
         try {
-            tripleDes.tripleSzyfrujPlik(chosenPathCryptogram, "decrypted_file." + fileExtension, key1, key2, key3, false);
+            elGamal.decryptFile(chosenPathCryptogram, "decrypted_file." + fileExtension);
             message.setText("Plik pomyślnie zapisany");
         } catch (IOException e) {
             e.printStackTrace();
