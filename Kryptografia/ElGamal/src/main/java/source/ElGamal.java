@@ -71,71 +71,103 @@ public class ElGamal {
         return c2.multiply(sInverse).mod(p);
     }
 
-    public byte[] encryptBytes(byte[] data) {
-        List<BigInteger[]> encryptedBlocks = new ArrayList<>();
-        int minBlockSize = 1; // Minimalny rozmiar bloku w bajtach
+    private int getMaxBlockSize() {
+        return (p.bitLength() + 7) / 8 + 1; // Max block size in bytes
+    }
 
-        int bitLength = p.bitLength();
-        int blockSize = Math.max(minBlockSize, (bitLength - 1) / 8); // Block size in bytes
+    public byte[] encryptBytes(byte[] message) {
+        int blockSize = (p.bitLength() - 1) / 8; // Number of bytes required to represent a block in ElGamal
+        int maxBlockSize = getMaxBlockSize(); // Max size of c1 and c2
+        List<byte[]> encryptedBlocks = new ArrayList<>();
 
-        for (int i = 0; i < data.length; i += blockSize) {
-            int length = Math.min(blockSize, data.length - i);
-            byte[] block = new byte[length];
-            System.arraycopy(data, i, block, 0, length);
-            BigInteger message = new BigInteger(1, block); // Convert block to BigInteger
-            encryptedBlocks.add(encrypt(message));
-        }
+        List<byte[]> blocks = splitIntoBlocks(message, blockSize);
 
-        List<Byte> encryptedBytes = new ArrayList<>();
-        for (BigInteger[] encryptedBlock : encryptedBlocks) {
+        for (byte[] block : blocks) {
+            // Padding
+            if (block.length < blockSize) {
+                block = Arrays.copyOf(block, blockSize);
+            }
+
+            BigInteger messageBlock = new BigInteger(1, block);
+            BigInteger[] encryptedBlock = encrypt(messageBlock);
+
             byte[] c1Bytes = encryptedBlock[0].toByteArray();
             byte[] c2Bytes = encryptedBlock[1].toByteArray();
-            addLengthAndData(encryptedBytes, c1Bytes);
-            addLengthAndData(encryptedBytes, c2Bytes);
+
+            // Pad c1 and c2 to maxBlockSize
+            c1Bytes = padToLength(c1Bytes, maxBlockSize);
+            c2Bytes = padToLength(c2Bytes, maxBlockSize);
+
+            encryptedBlocks.add(c1Bytes);
+            encryptedBlocks.add(c2Bytes);
         }
 
-        byte[] result = new byte[encryptedBytes.size()];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = encryptedBytes.get(i);
-        }
-        return result;
+        return concatBlocks(encryptedBlocks);
     }
 
-
-
-    public byte[] decryptBytes(byte[] data) {
+    public byte[] decryptBytes(byte[] ciphertext) {
+        int maxBlockSize = getMaxBlockSize(); // Max size of c1 and c2
         List<byte[]> decryptedBlocks = new ArrayList<>();
+        int encryptedBlockSize = 2 * maxBlockSize;
 
-        int bitLength = p.bitLength();
-        int minBlockSize = 1; // Minimalny rozmiar bloku w bajtach
-        int blockSize = Math.max(minBlockSize, (bitLength - 1) / 8); // Oblicz długość bloku w bajtach
+        for (int i = 0; i < ciphertext.length; i += encryptedBlockSize) {
+            byte[] c1Bytes = Arrays.copyOfRange(ciphertext, i, i + maxBlockSize);
+            byte[] c2Bytes = Arrays.copyOfRange(ciphertext, i + maxBlockSize, i + encryptedBlockSize);
 
-        BigInteger[] ciphertext =  bytesToBigIntegers(data, blockSize);
-        BigInteger decrypted = decrypt(ciphertext);
-        return decrypted.toByteArray();
-    }
+            BigInteger[] cipherBlock = new BigInteger[2];
+            cipherBlock[0] = new BigInteger(1, c1Bytes);
+            cipherBlock[1] = new BigInteger(1, c2Bytes);
 
-    public BigInteger[] bytesToBigIntegers(byte[] data, int blockSize) {
-        List<BigInteger> bigIntegers = new ArrayList<>();
-
-        for (int i = 0; i < data.length; i += blockSize) {
-            int length = Math.min(blockSize, data.length - i);
-            byte[] block = Arrays.copyOfRange(data, i, i + length);
-            bigIntegers.add(new BigInteger(block));
+            byte[] decrypted = this.decrypt(cipherBlock).toByteArray();
+            byte[] unpaddedDecrypted = removePadding(decrypted);
+            decryptedBlocks.add(unpaddedDecrypted);
         }
 
-        return bigIntegers.toArray(new BigInteger[0]);
+        return concatBlocks(decryptedBlocks);
     }
 
-
-    private void addLengthAndData(List<Byte> byteList, byte[] data) {
-        byte[] lengthBytes = BigInteger.valueOf(data.length).toByteArray();
-//        for (byte b : lengthBytes) {
-//            byteList.add(b);
-//        }
-        for (byte b : data) {
-            byteList.add(b);
+    private byte[] removePadding(byte[] bytes) {
+        int i = bytes.length;
+        while (i > 0 && bytes[i - 1] == 0) {
+            i--;
         }
+        return Arrays.copyOf(bytes, i);
+    }
+
+    private byte[] padToLength(byte[] bytes, int length) {
+        if (bytes.length >= length) {
+            return bytes;
+        }
+        byte[] padded = new byte[length];
+        System.arraycopy(bytes, 0, padded, length - bytes.length, bytes.length);
+        return padded;
+    }
+
+    public static List<byte[]> splitIntoBlocks(byte[] array, int blocksize) {
+        List<byte[]> blocks = new ArrayList<>();
+        int inpos = 0;
+        int remaining = array.length;
+        while (remaining > 0) {
+            int len = Math.min(remaining, blocksize);
+            blocks.add(Arrays.copyOfRange(array, inpos, inpos + len));
+            inpos += len;
+            remaining -= len;
+        }
+        return blocks;
+    }
+
+    public static byte[] concatBlocks(List<byte[]> blocks) {
+        int outpos = 0;
+        int len = 0;
+        for (byte[] b : blocks) {
+            len += b.length;
+        }
+        byte[] res = new byte[len];
+        for (byte[] b : blocks) {
+            System.arraycopy(b, 0, res, outpos, b.length);
+            outpos += b.length;
+        }
+        return res;
     }
 
 

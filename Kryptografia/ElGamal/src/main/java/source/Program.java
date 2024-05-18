@@ -43,19 +43,19 @@ public class Program {
 
 
         // Tworzenie instancji ElGamal
-
+        ElGamal el = new ElGamal(2048);
         // Przygotowanie wiadomości do szyfrowania
-        String  messageString = "dupa";
+        String  messageString = "JESTEM TEST TEST TEST";
         byte[] message = messageString.getBytes(StandardCharsets.ISO_8859_1);
 
         // Szyfrowanie wiadomości
-        byte[] encryptedMessage = elGamal.encryptBytes(message);
+        byte[] encryptedMessage = el.encryptBytes(message);
         System.out.println("Zaszyfrowana wiadomość: " + Arrays.toString(encryptedMessage));
 
         // Deszyfrowanie wiadomości
-        byte[] decryptedMessage = elGamal.decryptBytes(encryptedMessage);
+        byte[] decryptedMessage = el.decryptBytes(encryptedMessage);
         String decryptedString = new String(decryptedMessage, StandardCharsets.ISO_8859_1);
-      ;
+
         System.out.println("Odszyfrowana wiadomość: " +   decryptedString);
     }
 }
