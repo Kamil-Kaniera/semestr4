@@ -80,14 +80,12 @@ public class ElGamal {
         int maxBlockSize = getMaxBlockSize(); // Max size of c1 and c2
         List<byte[]> encryptedBlocks = new ArrayList<>();
 
+        // Pad the message before splitting into blocks
+        message = dodajPadding(message, blockSize);
+
         List<byte[]> blocks = splitIntoBlocks(message, blockSize);
 
         for (byte[] block : blocks) {
-            // Padding
-            if (block.length < blockSize) {
-                block = Arrays.copyOf(block, blockSize);
-            }
-
             BigInteger messageBlock = new BigInteger(1, block);
             BigInteger[] encryptedBlock = encrypt(messageBlock);
 
@@ -119,19 +117,35 @@ public class ElGamal {
             cipherBlock[1] = new BigInteger(1, c2Bytes);
 
             byte[] decrypted = this.decrypt(cipherBlock).toByteArray();
-            byte[] unpaddedDecrypted = removePadding(decrypted);
-            decryptedBlocks.add(unpaddedDecrypted);
+            decryptedBlocks.add(decrypted);
         }
-
-        return concatBlocks(decryptedBlocks);
+        // Concatenate all decrypted blocks and remove padding
+        byte[] decryptedData = concatBlocks(decryptedBlocks);
+        return usunPadding(decryptedData);
     }
 
-    private byte[] removePadding(byte[] bytes) {
-        int i = bytes.length;
-        while (i > 0 && bytes[i - 1] == 0) {
-            i--;
+    private byte[] dodajPadding(byte[] dane, int blockSize) {
+        int brakujaceBajty = blockSize - (dane.length % blockSize);
+        if (brakujaceBajty == 0) {
+            brakujaceBajty = blockSize; // Dodajemy cały nowy blok paddingu
         }
-        return Arrays.copyOf(bytes, i);
+        byte[] daneZPaddingiem = new byte[dane.length + brakujaceBajty];
+        System.arraycopy(dane, 0, daneZPaddingiem, 0, dane.length);
+        for (int i = dane.length; i < daneZPaddingiem.length; i++) {
+            daneZPaddingiem[i] = (byte) brakujaceBajty;
+        }
+        return daneZPaddingiem;
+    }
+
+    private byte[] usunPadding(byte[] dane) {
+        if (dane.length == 0) {
+            throw new IllegalArgumentException("Invalid padding length");
+        }
+        int iloscPaddingu = dane[dane.length - 1] & 0xFF;
+        if (iloscPaddingu <= 0 || iloscPaddingu > dane.length) {
+            throw new IllegalArgumentException("Invalid padding value");
+        }
+        return Arrays.copyOfRange(dane, 0, dane.length - iloscPaddingu);
     }
 
     private byte[] padToLength(byte[] bytes, int length) {
