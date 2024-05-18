@@ -33,7 +33,7 @@ public class MainViewController {
     private String chosenPathCryptogram = "";
 
 
-    //Status aktualnie zaznaczonego radio buttonpublicKeyH = {TextField@4662} "TextField[id=publicKeyH, styleClass=text-input text-field]"
+    //Status aktualnie zaznaczonego radio button
     private STATUS toggleStatus = STATUS.WINDOW;
 
     private enum STATUS {
