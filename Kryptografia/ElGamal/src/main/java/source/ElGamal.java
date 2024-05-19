@@ -92,31 +92,51 @@ public class ElGamal {
             byte[] c1Bytes = encryptedBlock[0].toByteArray();
             byte[] c2Bytes = encryptedBlock[1].toByteArray();
 
+            // Add padding length bytes (1 byte each)
+            byte c1PaddingByte = (byte) (maxBlockSize - c1Bytes.length);
+            byte c2PaddingByte = (byte) (maxBlockSize - c2Bytes.length);
+
             // Pad c1 and c2 to maxBlockSize
             c1Bytes = padToLength(c1Bytes, maxBlockSize);
             c2Bytes = padToLength(c2Bytes, maxBlockSize);
 
             encryptedBlocks.add(c1Bytes);
+            encryptedBlocks.add(new byte[]{c1PaddingByte});
             encryptedBlocks.add(c2Bytes);
+            encryptedBlocks.add(new byte[]{c2PaddingByte});
         }
 
         return concatBlocks(encryptedBlocks);
     }
 
     public byte[] decryptBytes(byte[] ciphertext) {
+        int blockSize = (p.bitLength() - 1) / 8; // Number of bytes required to represent a block in ElGamal
         int maxBlockSize = getMaxBlockSize(); // Max size of c1 and c2
         List<byte[]> decryptedBlocks = new ArrayList<>();
-        int encryptedBlockSize = 2 * maxBlockSize;
+        int encryptedBlockSize = 2 * maxBlockSize + 2;
 
         for (int i = 0; i < ciphertext.length; i += encryptedBlockSize) {
             byte[] c1Bytes = Arrays.copyOfRange(ciphertext, i, i + maxBlockSize);
-            byte[] c2Bytes = Arrays.copyOfRange(ciphertext, i + maxBlockSize, i + encryptedBlockSize);
+            byte c1PaddingByte = ciphertext[i + maxBlockSize]; // Read padding length byte
+            byte[] c2Bytes = Arrays.copyOfRange(ciphertext, i + maxBlockSize + 1, i + 2 * maxBlockSize + 1);
+            byte c2PaddingByte = ciphertext[i + 2 * maxBlockSize + 1]; // Read padding length byte
+
+            c1Bytes = Arrays.copyOfRange(c1Bytes, 0, maxBlockSize - (c1PaddingByte & 0xFF));
+            c2Bytes = Arrays.copyOfRange(c2Bytes, 0, maxBlockSize - (c2PaddingByte & 0xFF));
 
             BigInteger[] cipherBlock = new BigInteger[2];
             cipherBlock[0] = new BigInteger(1, c1Bytes);
             cipherBlock[1] = new BigInteger(1, c2Bytes);
 
             byte[] decrypted = this.decrypt(cipherBlock).toByteArray();
+            if(decrypted.length > blockSize && decrypted[0] == 0){
+                decrypted = Arrays.copyOfRange(decrypted, 1, decrypted.length);
+            }
+            else if (decrypted.length < blockSize) {
+                byte[] paddedDecrypted = new byte[blockSize];
+                System.arraycopy(decrypted, 0, paddedDecrypted, blockSize - decrypted.length, decrypted.length);
+                decrypted = paddedDecrypted;
+            }
             decryptedBlocks.add(decrypted);
         }
         // Concatenate all decrypted blocks and remove padding
@@ -153,7 +173,7 @@ public class ElGamal {
             return bytes;
         }
         byte[] padded = new byte[length];
-        System.arraycopy(bytes, 0, padded, length - bytes.length, bytes.length);
+        System.arraycopy(bytes, 0, padded, 0, bytes.length);
         return padded;
     }
 
