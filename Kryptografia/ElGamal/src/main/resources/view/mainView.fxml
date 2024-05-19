@@ -22,28 +22,28 @@
             <Font name="System Bold" size="12.0" />
          </font>
       </Label>
-      <TextField fx:id="publicKeyG" layoutX="40.0" layoutY="60.0" prefHeight="25.0" prefWidth="620.0" promptText="g" />
+      <TextField fx:id="publicKeyG" disable="true" layoutX="40.0" layoutY="60.0" prefHeight="25.0" prefWidth="620.0" promptText="g" />
 
       <Label layoutX="40.0" layoutY="100.0" text="Klucz publiczny: h">
          <font>
             <Font name="System Bold" size="12.0" />
          </font>
       </Label>
-      <TextField fx:id="publicKeyH" layoutX="40.0" layoutY="120.0" prefHeight="25.0" prefWidth="620.0" promptText="h" />
+      <TextField fx:id="publicKeyH" disable="true" layoutX="40.0" layoutY="120.0" prefHeight="25.0" prefWidth="620.0" promptText="h" />
 
       <Label layoutX="40.0" layoutY="160.0" text="Klucz prywatny: a">
          <font>
             <Font name="System Bold" size="12.0" />
          </font>
       </Label>
-      <TextField fx:id="privateKeyA" layoutX="40.0" layoutY="180.0" prefHeight="25.0" prefWidth="620.0" promptText="a" />
+      <TextField fx:id="privateKeyA" disable="true" layoutX="40.0" layoutY="180.0" prefHeight="25.0" prefWidth="620.0" promptText="a" />
 
       <Label layoutX="40.0" layoutY="220.0" text="MOD N">
          <font>
             <Font name="System Bold" size="12.0" />
          </font>
       </Label>
-      <TextField fx:id="modN" layoutX="40.0" layoutY="240.0" prefHeight="25.0" prefWidth="620.0" promptText="N" />
+      <TextField fx:id="modN" disable="true" layoutX="40.0" layoutY="240.0" prefHeight="25.0" prefWidth="620.0" promptText="N" />
 
       <Button fx:id="key_generator" layoutX="40.0" layoutY="280.0" mnemonicParsing="false" onAction="#onKeyGeneratorButtonClick" text="Generuj Klucze" />
 

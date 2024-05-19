@@ -36,6 +36,8 @@ public class MainViewController {
     //Status aktualnie zaznaczonego radio button
     private STATUS toggleStatus = STATUS.WINDOW;
 
+    private ElGamal elGamal;
+
     private enum STATUS {
         WINDOW,
         FILE
@@ -55,7 +57,7 @@ public class MainViewController {
 
     @FXML
     private void onKeyGeneratorButtonClick() {
-        ElGamal elGamal = new ElGamal(2048);
+        elGamal = new ElGamal(2048);
         publicKeyG.setText(elGamal.getG().toString(16));
         publicKeyH.setText(elGamal.getH().toString(16));
         privateKeyA.setText(elGamal.getA().toString(16));
@@ -85,10 +87,10 @@ public class MainViewController {
     @FXML
     private void onEncryptButtonClick(){
         message.setText("");
-        byte[] g = hexStringToByteArray(publicKeyG.getText());
-        byte[] h = hexStringToByteArray(publicKeyH.getText());
-        byte[] a = hexStringToByteArray(privateKeyA.getText());
-        byte[] p = hexStringToByteArray(modN.getText());
+        byte[] g = elGamal.getG().toByteArray();
+        byte[] h = elGamal.getH().toByteArray();
+        byte[] a = elGamal.getA().toByteArray();
+        byte[] p = elGamal.getP().toByteArray();
 
         if (toggleStatus == STATUS.WINDOW) encryptWindow(p, g, h, a);
         else if (toggleStatus == STATUS.FILE) encryptFile(p, g, h, a, getFileExtension(chosenPathPlainText));
@@ -97,10 +99,10 @@ public class MainViewController {
     @FXML
     private void onDecryptButtonClick() {
         message.setText("");
-        byte[] g = hexStringToByteArray(publicKeyG.getText());
-        byte[] h = hexStringToByteArray(publicKeyH.getText());
-        byte[] a = hexStringToByteArray(privateKeyA.getText());
-        byte[] p = hexStringToByteArray(modN.getText());
+        byte[] g = elGamal.getG().toByteArray();
+        byte[] h = elGamal.getH().toByteArray();
+        byte[] a = elGamal.getA().toByteArray();
+        byte[] p = elGamal.getP().toByteArray();
 
 
 
