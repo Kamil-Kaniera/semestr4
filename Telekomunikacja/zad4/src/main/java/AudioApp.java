@@ -1,17 +1,14 @@
 import javax.sound.sampled.*;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.Scanner;
 
 public class AudioApp {
-    private static final String RECEIVER_IP = "192.168.43.77";
-    private static final int PORT = 12345;
     private static int samplingRate = 44100; // Początkowa częstotliwość próbkowania
     private static int quantizationLevels = 16; // Początkowa liczba poziomów kwantyzacji
-
     private static TargetDataLine audioLine;
 
     public static void main(String[] args) {
@@ -30,10 +27,16 @@ public class AudioApp {
 
             switch (choice) {
                 case 1:
-                    receiveAudio();
+                    System.out.print("Podaj port do odbioru: ");
+                    int receivePort = scanner.nextInt();
+                    receiveAudio(receivePort);
                     break;
                 case 2:
-                    sendAudio();
+                    System.out.print("Podaj adres IP odbiorcy: ");
+                    String receiverIp = scanner.next();
+                    System.out.print("Podaj port odbiorcy: ");
+                    int sendPort = scanner.nextInt();
+                    sendAudio(receiverIp, sendPort);
                     break;
                 case 3:
                     showAuthors();
@@ -49,31 +52,31 @@ public class AudioApp {
         scanner.close();
     }
 
-    private static void receiveAudio() {
+    private static void receiveAudio(int port) {
         new Thread(() -> {
-            try {
-                DatagramSocket socket = new DatagramSocket(PORT);
+                try (DatagramSocket socket = new DatagramSocket(port)) {
 
-                AudioFormat format = new AudioFormat(44100, 16, 1, true, false);
-                DataLine.Info info = new DataLine.Info(SourceDataLine.class, format); // tworzymy reprezentację formatu odbieranego sygnału
-                SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info); // ustawiamy linię dźwiękową z odpowiednimi parametrami
-                line.open(format);  // otwieramy linię dźwiękową z określonym formatem audio
-                line.start(); // rozpoczynamy odtwarzanie danych audio
-                System.out.println("Odbieranie audio...");
+                    AudioFormat format = new AudioFormat(44100, 16, 1, true, false);
+                    DataLine.Info info = new DataLine.Info(SourceDataLine.class, format); // tworzymy reprezentację formatu odbieranego sygnału
+                    SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info); // ustawiamy linię dźwiękową z odpowiednimi parametrami
+                    line.open(format);  // otwieramy linię dźwiękową z określonym formatem audio
+                    line.start(); // rozpoczynamy odtwarzanie danych audio
+                    System.out.println("Odbieranie audio...");
 
-                byte[] buffer = new byte[1024];
-                while (true) {
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    socket.receive(packet); // odbieramy przysłane do nas pakiety i przesyłamy je do linii dźwiękowej aby następnie je odtworzyć
-                    line.write(packet.getData(), 0, packet.getLength());
+                    byte[] buffer = new byte[1024];
+                    while (true) {
+                        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                        socket.receive(packet); // odbieramy przysłane do nas pakiety i przesyłamy je do linii dźwiękowej aby następnie je odtworzyć
+                        line.write(packet.getData(), 0, packet.getLength());
+                    }
                 }
-            } catch (IOException | LineUnavailableException e) {
-                throw new RuntimeException(e);
-            }
+                catch (IOException | LineUnavailableException e) {
+                    throw new RuntimeException(e);
+                }
         }).start();
     }
 
-    private static void sendAudio() {
+    private static void sendAudio(String receiverIp, int port) {
         new Thread(() -> {
             // GUI
             JFrame frame = new JFrame("Audio Sender");
@@ -92,32 +95,26 @@ public class AudioApp {
             quantizationSlider.setMajorTickSpacing(8);
             quantizationSlider.setMinorTickSpacing(8);
             quantizationSlider.setPaintTicks(true);
-            // GUI
 
-            samplingSlider.addChangeListener(new ChangeListener() {  // jeśli zmienimy częstotliwość próbkowania za pomocą zsuwaka, wywołana zostanie ta funkcja
-                public void stateChanged(ChangeEvent event) {
-                    samplingRate = ((JSlider) event.getSource()).getValue();  // pobieramy wartość nowo ustawioną wartość próbkowania
-                    samplingLabel.setText("Częstotliwość próbkowania: " + samplingRate);  // ustawiamy nowo ustawioną wartość próbkowania w GUI
-                    try {
-                        updateAudioSettings();                                            // aktualizujemy wysyłany sygnał o nową częstotliwość próbkowania
-                    } catch (LineUnavailableException e) {
-                        throw new RuntimeException(e);
-                    }
+            samplingSlider.addChangeListener(event -> {
+                samplingRate = ((JSlider) event.getSource()).getValue();
+                samplingLabel.setText("Częstotliwość próbkowania: " + samplingRate);
+                try {
+                    updateAudioSettings();
+                } catch (LineUnavailableException e) {
+                    throw new RuntimeException(e);
                 }
             });
 
-            quantizationSlider.addChangeListener(new ChangeListener() {
-                public void stateChanged(ChangeEvent event) {
-                    // Sprawdzenie, czy wartość jest wielokrotnością 8
-                    int value = ((JSlider) event.getSource()).getValue();              // wszystko tak samo jak w funkcji wyżej tylko zezwalamy na ustawienie poziomu
-                    if (value % 8 == 0) {                                              // kwantyzacji na 8 bitów lub 16 bitów, inna wartość jest niedozwolona przez naszą kartę graficzną
-                        quantizationLevels = value;
-                        quantizationLabel.setText("Liczba poziomów kwantyzacji: " + quantizationLevels);
-                        try {
-                            updateAudioSettings();
-                        } catch (LineUnavailableException e) {
-                            throw new RuntimeException(e);
-                        }
+            quantizationSlider.addChangeListener(event -> {
+                int value = ((JSlider) event.getSource()).getValue();
+                if (value % 8 == 0) {
+                    quantizationLevels = value;
+                    quantizationLabel.setText("Liczba poziomów kwantyzacji: " + quantizationLevels);
+                    try {
+                        updateAudioSettings();
+                    } catch (LineUnavailableException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             });
@@ -127,43 +124,46 @@ public class AudioApp {
             panel.add(quantizationLabel);
             panel.add(quantizationSlider);
 
-            frame.getContentPane().add(panel);      // dodajemy kolejne elementy do GUI i ustawiamy je na widoczne
+            frame.getContentPane().add(panel);
             frame.setVisible(true);
 
-            try {
-                DatagramSocket socket = new DatagramSocket();                    // tworzymy obiekt gniazda sieciowego
-                InetAddress address = InetAddress.getByName(RECEIVER_IP);        // zapisujemy adres hosta, do którego będziemy wysyłać sygnał cyfrowy
 
-                updateAudioSettings();                                           // inicjalizujemy wartości jak próbkowanie i poziom kwantyzacji
+                try (DatagramSocket socket = new DatagramSocket()) {
+                    InetAddress address = InetAddress.getByName(receiverIp);
 
-                byte[] buffer = new byte[1024];       // tworzymy bufor do przechowywania próbek dźwiękowych odczytanych z linii dźwiękowej
-                while (true) {
-                    int bytesRead = audioLine.read(buffer, 0, buffer.length);  // zapisujemy odczytane dane audio z linii dźwiękowej w zmiennej bytesRead
-                    DatagramPacket packet = new DatagramPacket(buffer, bytesRead, address, PORT); // tworzymy pakiety z zapisanych bajtów w bytesRead, aby je wysłać na podane gniazdo sieciowe
-                    socket.send(packet); // wysyłamy na podane gniazdo sieciowe pakiety
+                    updateAudioSettings();
+
+                    byte[] buffer = new byte[1024];
+                    while (true) {
+                        int bytesRead = audioLine.read(buffer, 0, buffer.length);
+                        DatagramPacket packet = new DatagramPacket(buffer, bytesRead, address, port);
+                        socket.send(packet);
+                    }
                 }
-            } catch (LineUnavailableException | IOException e) {
-                e.printStackTrace();
-            }
+                catch (LineUnavailableException | IOException e) {
+                    e.printStackTrace();
+                }
         }).start();
     }
 
     private static void updateAudioSettings() throws LineUnavailableException {
-        if (audioLine != null) {    // jeżeli linia dźwiękowa jest otwarta to trzeba ją najpierw zatrzymać, żeby móc zaktualizować właściwości przesyłanego sygnału
+        if (audioLine != null) {
             audioLine.stop();
             audioLine.close();
         }
 
-        AudioFormat format = new AudioFormat(samplingRate, quantizationLevels, 1, true, false); // definiujemy format danych audio
-        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format); // określamy typ linii dźwiękowej, jaki będziemy chcieli stworzyć
-        audioLine = (TargetDataLine) AudioSystem.getLine(info);  // ustawiamy nowe parametry linii dźwiękowej
-        audioLine.open(format); // otwieramy linię dźwiękową
+        AudioFormat format = new AudioFormat(samplingRate, quantizationLevels, 1, true, false);
+        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+        audioLine = (TargetDataLine) AudioSystem.getLine(info);
+        audioLine.open(format);
         audioLine.start();
     }
 
     private static void showAuthors() {
-        System.out.println("Autorzy programu:\n" +
-                "Kamil Kaniera 247689\n" +
-                "Krzysztof Purgat 247771\n");
+        System.out.println("""
+                Autorzy programu:
+                Kamil Kaniera 247689
+                Krzysztof Purgat 247771
+                """);
     }
 }
