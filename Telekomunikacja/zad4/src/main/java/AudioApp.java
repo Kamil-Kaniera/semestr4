@@ -169,23 +169,30 @@ public class AudioApp {
     private static double calculateSNR(byte[] audioData) {
         double signalPower = 0;
         double noisePower = 0;
+        double totalSignal = 0;
 
+        // Obliczenie całkowitej mocy sygnału i jego wartości średniej
         for (int i = 0; i < audioData.length; i += 2) {
             int sample = ((audioData[i + 1] << 8) | (audioData[i] & 0xff));
             signalPower += sample * sample;
+            totalSignal += sample;
         }
 
-        // Zakładamy, że szum to różnica między sygnałem a jego uśrednioną wartością
-        double meanSignal = signalPower / (audioData.length / 2);
+        double meanSignal = totalSignal / (audioData.length / 2);
+
+        // Obliczenie mocy szumu
         for (int i = 0; i < audioData.length; i += 2) {
             int sample = ((audioData[i + 1] << 8) | (audioData[i] & 0xff));
             noisePower += (sample - meanSignal) * (sample - meanSignal);
         }
 
+        // Obliczenie stosunku sygnału do szumu (SNR) w decybelach
         signalPower = signalPower / (audioData.length / 2);
         noisePower = noisePower / (audioData.length / 2);
+        double snr = 10 * Math.log10(signalPower / noisePower);
 
-        return 10 * Math.log10(signalPower / noisePower);
+        // Zwrócenie wartości SNR
+        return snr;
     }
 
     private static void showAuthors() {
