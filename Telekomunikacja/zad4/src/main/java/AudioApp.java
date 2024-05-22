@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.Scanner;
 
 public class AudioApp {
@@ -15,6 +16,7 @@ public class AudioApp {
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
 
+        // Pętla głównego menu
         while (!exit) {
             System.out.println("Menu:");
             System.out.println("1. Odbieraj audio");
@@ -29,20 +31,20 @@ public class AudioApp {
                 case 1:
                     System.out.print("Podaj port do odbioru: ");
                     int receivePort = scanner.nextInt();
-                    receiveAudio(receivePort);
+                    receiveAudio(receivePort); // Uruchom funkcję odbierania audio z podanym portem
                     break;
                 case 2:
                     System.out.print("Podaj adres IP odbiorcy: ");
                     String receiverIp = scanner.next();
                     System.out.print("Podaj port odbiorcy: ");
                     int sendPort = scanner.nextInt();
-                    sendAudio(receiverIp, sendPort);
+                    sendAudio(receiverIp, sendPort); // Uruchom funkcję wysyłania audio z podanym adresem IP i portem
                     break;
                 case 3:
-                    showAuthors();
+                    showAuthors(); // Wyświetl informacje o autorach
                     break;
                 case 4:
-                    exit = true;
+                    exit = true; // Zakończ program
                     break;
                 default:
                     System.out.println("Nieprawidłowy wybór, spróbuj ponownie.");
@@ -54,31 +56,32 @@ public class AudioApp {
 
     private static void receiveAudio(int port) {
         new Thread(() -> {
-                try (DatagramSocket socket = new DatagramSocket(port)) {
+            try (DatagramSocket socket = new DatagramSocket(port)) {
+                // Ustawienie formatu audio do odbioru
+                AudioFormat format = new AudioFormat(44100, 16, 1, true, false);
+                DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+                SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
+                line.open(format);
+                line.start();
+                System.out.println("Odbieranie audio...");
 
-                    AudioFormat format = new AudioFormat(44100, 16, 1, true, false);
-                    DataLine.Info info = new DataLine.Info(SourceDataLine.class, format); // tworzymy reprezentację formatu odbieranego sygnału
-                    SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info); // ustawiamy linię dźwiękową z odpowiednimi parametrami
-                    line.open(format);  // otwieramy linię dźwiękową z określonym formatem audio
-                    line.start(); // rozpoczynamy odtwarzanie danych audio
-                    System.out.println("Odbieranie audio...");
-
-                    byte[] buffer = new byte[1024];
-                    while (true) {
-                        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                        socket.receive(packet); // odbieramy przysłane do nas pakiety i przesyłamy je do linii dźwiękowej aby następnie je odtworzyć
-                        line.write(packet.getData(), 0, packet.getLength());
-                    }
+                byte[] buffer = new byte[1024];
+                while (true) {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    socket.receive(packet); // Odbierz pakiet audio
+                    line.write(packet.getData(), 0, packet.getLength()); // Przesyłaj dane do linii audio
+                    double snr = calculateSNR(packet.getData());
+                    System.out.println("SNR: " + snr + " dB");
                 }
-                catch (IOException | LineUnavailableException e) {
-                    throw new RuntimeException(e);
-                }
+            } catch (IOException | LineUnavailableException e) {
+                throw new RuntimeException(e);
+            }
         }).start();
     }
 
     private static void sendAudio(String receiverIp, int port) {
         new Thread(() -> {
-            // GUI
+            // GUI do ustawienia częstotliwości próbkowania i poziomów kwantyzacji
             JFrame frame = new JFrame("Audio Sender");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(300, 200);
@@ -100,7 +103,7 @@ public class AudioApp {
                 samplingRate = ((JSlider) event.getSource()).getValue();
                 samplingLabel.setText("Częstotliwość próbkowania: " + samplingRate);
                 try {
-                    updateAudioSettings();
+                    updateAudioSettings(); // Aktualizacja ustawień audio po zmianie częstotliwości próbkowania
                 } catch (LineUnavailableException e) {
                     throw new RuntimeException(e);
                 }
@@ -112,7 +115,7 @@ public class AudioApp {
                     quantizationLevels = value;
                     quantizationLabel.setText("Liczba poziomów kwantyzacji: " + quantizationLevels);
                     try {
-                        updateAudioSettings();
+                        updateAudioSettings(); // Aktualizacja ustawień audio po zmianie poziomów kwantyzacji
                     } catch (LineUnavailableException e) {
                         throw new RuntimeException(e);
                     }
@@ -128,21 +131,24 @@ public class AudioApp {
             frame.setVisible(true);
 
 
-                try (DatagramSocket socket = new DatagramSocket()) {
-                    InetAddress address = InetAddress.getByName(receiverIp);
+            try (DatagramSocket socket = new DatagramSocket()) {
+                InetAddress address = InetAddress.getByName(receiverIp);
 
-                    updateAudioSettings();
+                updateAudioSettings(); // Inicjalizacja ustawień audio
 
-                    byte[] buffer = new byte[1024];
-                    while (true) {
-                        int bytesRead = audioLine.read(buffer, 0, buffer.length);
-                        DatagramPacket packet = new DatagramPacket(buffer, bytesRead, address, port);
-                        socket.send(packet);
+                byte[] buffer = new byte[1024];
+                while (true) {
+                    int bytesRead = audioLine.read(buffer, 0, buffer.length);
+                    DatagramPacket packet = new DatagramPacket(buffer, bytesRead, address, port);
+                    try {
+                        socket.send(packet); // Wysłanie pakietu audio
+                    } catch (SocketException e) {
+                        System.err.println("SocketException: " + e.getMessage());
                     }
                 }
-                catch (LineUnavailableException | IOException e) {
-                    e.printStackTrace();
-                }
+            } catch (LineUnavailableException | IOException e) {
+                e.printStackTrace();
+            }
         }).start();
     }
 
@@ -152,11 +158,34 @@ public class AudioApp {
             audioLine.close();
         }
 
+        // Ustawienie nowego formatu audio
         AudioFormat format = new AudioFormat(samplingRate, quantizationLevels, 1, true, false);
         DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
         audioLine = (TargetDataLine) AudioSystem.getLine(info);
         audioLine.open(format);
         audioLine.start();
+    }
+
+    private static double calculateSNR(byte[] audioData) {
+        double signalPower = 0;
+        double noisePower = 0;
+
+        for (int i = 0; i < audioData.length; i += 2) {
+            int sample = ((audioData[i + 1] << 8) | (audioData[i] & 0xff));
+            signalPower += sample * sample;
+        }
+
+        // Zakładamy, że szum to różnica między sygnałem a jego uśrednioną wartością
+        double meanSignal = signalPower / (audioData.length / 2);
+        for (int i = 0; i < audioData.length; i += 2) {
+            int sample = ((audioData[i + 1] << 8) | (audioData[i] & 0xff));
+            noisePower += (sample - meanSignal) * (sample - meanSignal);
+        }
+
+        signalPower = signalPower / (audioData.length / 2);
+        noisePower = noisePower / (audioData.length / 2);
+
+        return 10 * Math.log10(signalPower / noisePower);
     }
 
     private static void showAuthors() {
