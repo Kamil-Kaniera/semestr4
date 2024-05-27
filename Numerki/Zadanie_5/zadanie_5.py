@@ -76,7 +76,7 @@ def build_approximation_polynomial(coefficients, degree):
 def display_approximation_polynomial(coefficients):
     terms = []
     for i, coef in enumerate(coefficients):
-        term = f"{coef:.4f} * x^{i}"
+        term = f"{coef:.4f} * H_{i}(x)"
         terms.append(term)
     polynomial_str = " + ".join(terms)
     print(f"Wielomian aproksymujący:\nP(x) = {polynomial_str}")
