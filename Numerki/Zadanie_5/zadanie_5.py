@@ -4,6 +4,8 @@ from scipy.special import hermite
 
 # Schemat Hornera
 from horner import horner_scheme
+
+# Kwadratura Gaussa-Hermite’a
 from hermgauss import *
 
 
@@ -120,12 +122,6 @@ else:
 beginning = float(input("Podaj początek przedziału aproksymacji: "))
 end = float(input("Podaj koniec przedziału aproksymacji: "))
 
-# Wybór stopnia
-degree = int(input("Podaj stopień wielomianu: "))
-
-# Wybór liczby węzłów
-num_nodes = int(input("Podaj liczbę węzłów: "))
-
 # ---------------------------------------------------- Wykres oryginalnej funkcji
 x = np.linspace(beginning, end, 1000)
 y_true = function(x)
@@ -133,6 +129,12 @@ y_true = function(x)
 plt.plot(x, y_true, label='Funkcja oryginalna')
 plt.legend()
 plt.show()
+
+# Wybór stopnia
+degree = int(input("Podaj stopień wielomianu: "))
+
+# Wybór liczby węzłów
+num_nodes = int(input("Podaj liczbę węzłów: "))
 
 # ---------------------------------------------------- Obliczenia
 print("\n----------------------------------------------------\n")
