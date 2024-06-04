@@ -3,7 +3,6 @@ import pandas as pd
 import tensorflow as tf
 
 import plots
-import save_results
 
 
 # Setup file pattern "model_setup.txt"
@@ -217,7 +216,9 @@ METRICS = ['mean_squared_error']
 
 # -------------------------------
 
+# Read remaining parameters
 all_networks_params = read_model_parameters("model_setup.txt")
+
 all_models = []
 
 # Create, train and evaluate every network
@@ -237,14 +238,12 @@ for param in all_networks_params:
     model = create_model(INPUT_NEURONS, HIDDEN_LAYERS, HIDDEN_NEURONS, ACTIVATION, OUTPUT_NEURONS)
 
     # Train and predict
-    # train_mse, test_mse, predictions = execute_model(model, train_input, train_output, test_input, test_output)
-    # save_results.save_results_to_file(train_mse, test_mse, predictions, f"data_{current_index + 1}.pkl")
-    train_mse, test_mse, predictions = save_results.read_results_from_file(f"data_{current_index + 1}.pkl")
+    train_mse, test_mse, predictions = execute_model(model, train_input, train_output, test_input, test_output)
     result = NN_Result(train_mse, test_mse, predictions)
 
     all_models.append(NeuralNetwork(model, param, result))
 
-# Select best models
+# Select 3 best models
 best_models = []
 
 for i in range(find_highest_num_hidden_layers(all_models)):
@@ -252,37 +251,6 @@ for i in range(find_highest_num_hidden_layers(all_models)):
 
 print_networks(best_models)
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Plots
-#
-# 1 & 2
-# MSE for training and testing
-train_mse_list = [nn.results.train_mse for nn in best_models]
-test_mse_list = [nn.results.test_mse for nn in best_models]
-labels = [f'Sieć {i + 1}' for i in range(len(best_models))]
-plots.plot_mse(train_mse_list, test_mse_list, test_input, test_output, EPOCHS, labels)
-#
-# 3
-# Calculate errors for each network
-errors = []
-labels = []
-
-for nn in best_models:
-    error = np.mean((nn.results.predictions - test_output) ** 2, axis=1)
-    errors.append(error)
-    labels.append(f'Sieć {best_models.index(nn) + 1}')
-
-# Calculate baseline errors
-baseline_errors = np.mean((test_input - test_output) ** 2, axis=1)
-errors.append(baseline_errors)
-labels.append('Dystrybuanta błędów pomiarów dynamicznych')
-
-# Plot the CDF of errors
-plots.plot_distribution(errors, labels)
-#
-# 4
-# Plot corrected measurements for the best performing network
+print("Best Network: \n")
 best_network = min(best_models, key=lambda x: min(x.results.test_mse))
 print_networks([best_network])
-best_predictions = best_network.results.predictions.astype("float64")
-plots.plot_corrected_measurements(test_output, test_input, best_predictions)

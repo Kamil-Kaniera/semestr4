@@ -18,7 +18,7 @@ def plot_mse(train_mse_list, test_mse_list, test_input, test_output, epochs, lab
 
     # Plotting Training MSE
     plt.figure(figsize=(10, 5))
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 14})
     for i, train_mse in enumerate(train_mse_list):
         plt.plot(train_epochs, train_mse, label=labels[i])
 
@@ -29,12 +29,12 @@ def plot_mse(train_mse_list, test_mse_list, test_input, test_output, epochs, lab
     plt.title('MSE - dane treningowe')
     plt.legend()
     plt.grid()
-    plt.savefig('train_mse.png')
+    plt.savefig('train_mse.png', bbox_inches='tight')
     plt.show()
 
     # Plotting Testing MSE
     plt.figure(figsize=(10, 5))
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 14})
     for i, test_mse in enumerate(test_mse_list):
         plt.plot(test_epochs, test_mse, label=labels[i])
 
@@ -47,15 +47,15 @@ def plot_mse(train_mse_list, test_mse_list, test_input, test_output, epochs, lab
     plt.title('MSE - dane testowe')
     plt.legend()
     plt.grid()
-    plt.savefig('test_mse.png')
+    plt.savefig('test_mse.png', bbox_inches='tight')
     plt.show()
 
 
 def plot_distribution(errors, labels):
     plt.figure(figsize=(10, 5))
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 14})
 
-    colors = ['blue', 'orange', 'green', 'black']
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'black']
 
     all_errors_combined = np.concatenate(errors)
     sorted_all_errors_combined = np.sort(all_errors_combined)
@@ -71,7 +71,7 @@ def plot_distribution(errors, labels):
     plt.xlabel('Błąd')
     plt.ylabel('Prawdopodobieństwo skumulowane')
     plt.title('Dystrybuanty błędu')
-    plt.legend()
+    plt.legend(prop={'size': 10})
 
     # Set logarithmic scale and x-axis limits
     plt.xscale('log')
@@ -80,13 +80,13 @@ def plot_distribution(errors, labels):
     plt.xlim(xmin, xmax)
 
     plt.grid(True)
-    plt.savefig('distribution.png')
+    plt.savefig('distribution.png', bbox_inches='tight')
     plt.show()
 
 
 def plot_corrected_measurements(actual_values, measured_values, corrected_values):
     plt.figure(figsize=(10, 5))
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 14})
 
     plt.scatter(actual_values[:, 0], actual_values[:, 1], color='blue', label='Wartości rzeczywiste', zorder=4)
     plt.scatter(corrected_values[:, 0], corrected_values[:, 1], color='red', label='Wartości skorygowane', zorder=3)
@@ -95,7 +95,7 @@ def plot_corrected_measurements(actual_values, measured_values, corrected_values
     plt.title("Skorygowane wartości wyników")
     plt.xlabel("x [mm]")
     plt.ylabel("y [mm]")
-    plt.legend()
+    plt.legend(prop={'size': 10})
     plt.grid(True)
-    plt.savefig('corrected_measurements.png')
+    plt.savefig('corrected_measurements.png', bbox_inches='tight')
     plt.show()
