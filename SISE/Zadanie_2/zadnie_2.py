@@ -6,6 +6,17 @@ import plots
 import save_results
 
 
+# Setup file pattern "model_setup.txt"
+#
+# Number of networks
+# ------
+# Number of hidden layers
+# Number of neurons in a hidden level (each in separated by space)
+# Weights initialization (ru - RandomUniform, rn - RandomNormal, hn - HeNormal)
+# Learning rate
+# Number of epochs
+# ------
+# ----------------------------------------------------------------------------------------------------------------------
 class NN_Parameters:
     def __init__(self, num_hidden_layers, hidden_neurons, weights_initialization, learning_rate, num_epochs):
         self.num_hidden_layers = num_hidden_layers
@@ -30,6 +41,20 @@ class NeuralNetwork:
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Prepare the data
+def load_and_prepare_data(static_data_path, dynamic_data_path):
+    # Load and prepare static (training) data
+    static_data = pd.read_csv(static_data_path, header=None, na_values=['']).dropna()
+    training_input = static_data.iloc[:, [0, 1]].reset_index(drop=True)
+    training_output = static_data.iloc[:, [2, 3]].reset_index(drop=True)
+
+    # Load and prepare dynamic (testing) data
+    dynamic_data = pd.read_csv(dynamic_data_path, header=None, na_values=['']).dropna()
+    testing_input = dynamic_data.iloc[:, [0, 1]].reset_index(drop=True)
+    testing_output = dynamic_data.iloc[:, [2, 3]].reset_index(drop=True)
+
+    return training_input.to_numpy(), training_output.to_numpy(), testing_input.to_numpy(), testing_output.to_numpy()
+
 
 # Read setup file
 def read_model_parameters(file_path):
@@ -71,13 +96,15 @@ def read_model_parameters(file_path):
     return networks_params
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 # Create the model
 def create_model(input_neurons, hidden_layers, hidden_neurons, activation, output_neurons):
     # Initialize the model
     model = tf.keras.Sequential()
 
     # Input layer
-    model.add(tf.keras.layers.InputLayer(shape=(input_neurons,), kernel_initializer=WEIGHTS_INITIALIZATION))
+    model.add(tf.keras.layers.InputLayer(shape=(input_neurons,)))
 
     # Hidden layers
     for i in range(hidden_layers):
@@ -85,7 +112,7 @@ def create_model(input_neurons, hidden_layers, hidden_neurons, activation, outpu
             tf.keras.layers.Dense(hidden_neurons[i], activation=activation, kernel_initializer=WEIGHTS_INITIALIZATION))
 
     # Output layer
-    model.add(tf.keras.layers.Dense(output_neurons))
+    model.add(tf.keras.layers.Dense(output_neurons, activation=tf.keras.activations.linear))
 
     return model
 
@@ -130,27 +157,53 @@ def execute_model(neural_network, training_in, training_out, testing_in, testing
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Setup file pattern
-#
-# Number of networks
-# ------
-# Number of hidden layers
-# Number of neurons in a hidden level (each in separated by space)
-# Weights initialization (ru - RandomUniform, rn - RandomNormal, hn - HeNormal)
-# Learning rate
-# Number of epochs
-# ------
+def find_highest_num_hidden_layers(neural_networks):
+    highest_hidden_layers = 0
 
+    for nn in neural_networks:
+        if nn.parameters.num_hidden_layers > highest_hidden_layers:
+            highest_hidden_layers = nn.parameters.num_hidden_layers
+
+    return highest_hidden_layers
+
+
+def select_best_network(all_models, num_hidden_layers):
+    # Filter networks with the specified number of hidden layers
+    filtered_networks = [nn for nn in all_models if nn.parameters.num_hidden_layers == num_hidden_layers]
+
+    # If no networks found with the specified number of hidden layers, return None
+    if not filtered_networks:
+        return None
+
+    # Find the network with the lowest test MSE
+    best_network = min(filtered_networks, key=lambda nn: min(nn.results.test_mse))
+
+    return best_network
+
+
+def print_networks(networks):
+    for i, nn in enumerate(networks):
+        if nn is None:
+            continue
+        print(
+            "---------------------------------------------------\n"
+            f"Hidden Layers: {nn.parameters.num_hidden_layers}\n"
+            f"Hidden Neurons: {nn.parameters.hidden_neurons}\n"
+            f"Weights Initialization: {nn.parameters.weights_initialization.__class__.__name__}\n"
+            f"Learning Rate: {nn.parameters.learning_rate}\n"
+            f"Epochs: {nn.parameters.num_epochs}\n"
+            "---------------------------------------------------\n")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # Read the data
-# Training
-training_data = pd.read_csv('./combined_stat.csv', sep=';', header=None, names=['read_x', 'read_y', 'real_x', 'real_y'])
-train_input = training_data[['read_x', "read_y"]].values
-train_output = training_data[['real_x', "real_y"]].values
+#
+# Train data
+static_data = 'train_data.csv'
+# Test data
+dynamic_data = 'test_data.csv'
 
-# Testing
-test_data = pd.read_csv('./combined_dyn.csv', sep=';', header=None, names=['read_x', 'read_y', 'real_x', 'real_y'])
-test_input = test_data[['read_x', "read_y"]].values
-test_output = test_data[['real_x', "real_y"]].values
+train_input, train_output, test_input, test_output = load_and_prepare_data(static_data, dynamic_data)
 
 # -------------------------------
 # Every Neuron Network Shape
@@ -167,8 +220,11 @@ METRICS = ['mean_squared_error']
 all_networks_params = read_model_parameters("model_setup.txt")
 all_models = []
 
+# Create, train and evaluate every network
 for param in all_networks_params:
     current_index = all_networks_params.index(param)
+
+    print(f"Network {current_index + 1}")
 
     HIDDEN_LAYERS = param.num_hidden_layers
     HIDDEN_NEURONS = param.hidden_neurons
@@ -180,44 +236,53 @@ for param in all_networks_params:
     # Create
     model = create_model(INPUT_NEURONS, HIDDEN_LAYERS, HIDDEN_NEURONS, ACTIVATION, OUTPUT_NEURONS)
 
-    # train_mse, test_mse, predictions = execute_model(model, train_input, train_output, test_input, test_output)
-    # save_results.save_results_to_file(train_mse, test_mse, predictions, f"data_{current_index + 1}.pkl")
-    train_mse, test_mse, predictions = save_results.read_results_from_file(f"data_{current_index + 1}.pkl")
+    # Train and predict
+    train_mse, test_mse, predictions = execute_model(model, train_input, train_output, test_input, test_output)
+    save_results.save_results_to_file(train_mse, test_mse, predictions, f"data_{current_index + 1}.pkl")
+    # train_mse, test_mse, predictions = save_results.read_results_from_file(f"data_{current_index + 1}.pkl")
     result = NN_Result(train_mse, test_mse, predictions)
 
     all_models.append(NeuralNetwork(model, param, result))
 
+# Select best models
+best_models = []
 
+for i in range(find_highest_num_hidden_layers(all_models)):
+    best_models.append(select_best_network(all_models, i + 1))
+
+print_networks(best_models)
+
+# ----------------------------------------------------------------------------------------------------------------------
 # Plots
 #
 # 1 & 2
-train_mse_list = [nn.results.train_mse for nn in all_models]
-test_mse_list = [nn.results.test_mse for nn in all_models]
-labels = [f'Network {i+1}' for i in range(len(all_models))]
+# MSE for training and testing
+train_mse_list = [nn.results.train_mse for nn in best_models]
+test_mse_list = [nn.results.test_mse for nn in best_models]
+labels = [f'Sieć {i + 1}' for i in range(len(best_models))]
 plots.plot_mse(train_mse_list, test_mse_list, test_input, test_output, EPOCHS, labels)
 #
 # 3
 # Calculate errors for each network
 errors = []
 labels = []
-colors = ['blue', 'red', 'green']  # Add more colors if needed
 
-for nn in all_models:
+for nn in best_models:
     error = np.mean((nn.results.predictions - test_output) ** 2, axis=1)
     errors.append(error)
-    labels.append(f'Network {all_models.index(nn) + 1}')
+    labels.append(f'Sieć {best_models.index(nn) + 1}')
 
 # Calculate baseline errors
 baseline_errors = np.mean((test_input - test_output) ** 2, axis=1)
 errors.append(baseline_errors)
-labels.append('Baseline')
-colors.append('black')
+labels.append('Dystrybuanta błędów pomiarów dynamicznych')
 
 # Plot the CDF of errors
-plots.plot_distribution(errors, labels, colors)
-
+plots.plot_distribution(errors, labels)
+#
 # 4
 # Plot corrected measurements for the best performing network
-best_network = max(all_models, key=lambda x: min(x.results.test_mse))
+best_network = min(best_models, key=lambda x: min(x.results.test_mse))
+print_networks([best_network])
 best_predictions = best_network.results.predictions.astype("float64")
 plots.plot_corrected_measurements(test_output, test_input, best_predictions)

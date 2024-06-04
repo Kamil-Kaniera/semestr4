@@ -18,35 +18,47 @@ def plot_mse(train_mse_list, test_mse_list, test_input, test_output, epochs, lab
 
     # Plotting Training MSE
     plt.figure(figsize=(10, 5))
+    plt.rcParams.update({'font.size': 12})
     for i, train_mse in enumerate(train_mse_list):
-        plt.plot(train_epochs, train_mse, label=f'Training MSE ({labels[i]})')
+        plt.plot(train_epochs, train_mse, label=labels[i])
 
     plt.ylim(y_min, y_max)
-    plt.xlabel('Epochs')
+    plt.xlim(0.5, epochs)
+    plt.xlabel('Liczba epok')
     plt.ylabel('MSE')
-    plt.title(f'Training MSE per Epoch')
+    plt.title('MSE - dane treningowe')
     plt.legend()
     plt.grid()
+    plt.savefig('train_mse.png')
     plt.show()
 
     # Plotting Testing MSE
     plt.figure(figsize=(10, 5))
+    plt.rcParams.update({'font.size': 12})
     for i, test_mse in enumerate(test_mse_list):
-        plt.plot(test_epochs, test_mse, label=f'Testing MSE ({labels[i]})')
+        plt.plot(test_epochs, test_mse, label=labels[i])
 
     plt.hlines(reference_mse, xmin=0, xmax=epochs, linestyle='--',
-               color='black', label='Constant Line')
+               color='black', label='Błąd dla danych testowych')
     plt.ylim(y_min, y_max)
-    plt.xlabel('Epochs')
+    plt.xlim(0.5, epochs)
+    plt.xlabel('Liczba epok')
     plt.ylabel('MSE')
-    plt.title(f'Testing MSE per Epoch')
+    plt.title('MSE - dane testowe')
     plt.legend()
     plt.grid()
+    plt.savefig('test_mse.png')
     plt.show()
 
 
-def plot_distribution(errors, labels, colors):
+def plot_distribution(errors, labels):
     plt.figure(figsize=(10, 5))
+    plt.rcParams.update({'font.size': 12})
+
+    colors = ['blue', 'orange', 'green', 'black']
+
+    all_errors_combined = np.concatenate(errors)
+    sorted_all_errors_combined = np.sort(all_errors_combined)
 
     for error, label, color in zip(errors, labels, colors):
         sorted_errors = np.sort(error)
@@ -56,23 +68,34 @@ def plot_distribution(errors, labels, colors):
         else:
             plt.plot(sorted_errors, cdf, label=label, color=color)
 
-    plt.xlabel('Error')
-    plt.ylabel('CDF')
-    plt.title('CDF of Errors for Different Network Variants')
+    plt.xlabel('Błąd')
+    plt.ylabel('Prawdopodobieństwo skumulowane')
+    plt.title('Dystrybuanty błędu')
     plt.legend()
+
+    # Set logarithmic scale and x-axis limits
+    plt.xscale('log')
+    xmin = np.min(sorted_all_errors_combined)
+    xmax = np.max(sorted_all_errors_combined) + 10  # Extend the x-axis limit as needed
+    plt.xlim(xmin, xmax)
+
+    plt.grid(True)
+    plt.savefig('distribution.png')
     plt.show()
 
 
 def plot_corrected_measurements(actual_values, measured_values, corrected_values):
     plt.figure(figsize=(10, 5))
+    plt.rcParams.update({'font.size': 12})
 
-    plt.scatter(actual_values[:, 0], actual_values[:, 1], color='blue', label='Actual value', zorder=4)
-    plt.scatter(corrected_values[:, 0], corrected_values[:, 1], color='red', label='Corrected values', zorder=3)
-    plt.scatter(measured_values[:, 0], measured_values[:, 1], color='green', label='Measured values', zorder=2)
+    plt.scatter(actual_values[:, 0], actual_values[:, 1], color='blue', label='Wartości rzeczywiste', zorder=4)
+    plt.scatter(corrected_values[:, 0], corrected_values[:, 1], color='red', label='Wartości skorygowane', zorder=3)
+    plt.scatter(measured_values[:, 0], measured_values[:, 1], color='green', label='Wartości zmierzone', zorder=2)
 
-    plt.title("Comparison of actual, measured and corrected values")
+    plt.title("Skorygowane wartości wyników")
     plt.xlabel("x [mm]")
     plt.ylabel("y [mm]")
     plt.legend()
     plt.grid(True)
+    plt.savefig('corrected_measurements.png')
     plt.show()

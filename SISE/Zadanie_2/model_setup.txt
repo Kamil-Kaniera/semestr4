@@ -1,25 +1,81 @@
 # Number of networks
-3
+9
+#
+# ----------------------------------
 # Network 1
+#
 # Number of hidden layers
 1
 # Number of neurons in a hidden level (each in separated by space)
-10
+2
 # Weights initialization (ru - RandomUniform, rn - RandomNormal, hn - HeNormal)
 rn
 # Learning rate
-0.1
+0.0001
 # Number of epochs
-40
+8
+#
+# ----------------------------------
 # Network 2
+#
+1
+4
+ru
+0.0001
+8
+#
+# ----------------------------------
+# Network 3
+1
+6
+hn
+0.0001
+8
+#
+# ----------------------------------
+# Network 4
+#
+2
+2 2
+rn
+0.0001
+8
+# ----------------------------------
+# Network 5
+#
 2
 4 2
 ru
-0.01
-40
-# Network 3
+0.0001
+8
+# ----------------------------------
+# Network 6
+#
+2
+6 4
+hn
+0.0001
+8
+# ----------------------------------
+# Network 7
+#
 3
 6 4 2
+ru
+0.0001
+8
+# ----------------------------------
+# Network 8
+#
+3
+4 4 2
+rn
+0.0001
+8
+# ----------------------------------
+# Network 9
+3
+4 2 2
 hn
-0.01
-40
+0.0001
+8
