@@ -22,7 +22,7 @@ def plot_mse(train_mse_list, test_mse_list, test_input, test_output, epochs, lab
     for i, train_mse in enumerate(train_mse_list):
         plt.plot(train_epochs, train_mse, label=labels[i])
 
-    plt.ylim(y_min, y_max)
+    plt.ylim(15000, 70000)
     plt.xlim(0.5, epochs)
     plt.xlabel('Liczba epok')
     plt.ylabel('MSE')
@@ -40,7 +40,7 @@ def plot_mse(train_mse_list, test_mse_list, test_input, test_output, epochs, lab
 
     plt.hlines(reference_mse, xmin=0, xmax=epochs, linestyle='--',
                color='black', label='Błąd dla danych testowych')
-    plt.ylim(y_min, y_max)
+    plt.ylim(15000, 70000)
     plt.xlim(0.5, epochs)
     plt.xlabel('Liczba epok')
     plt.ylabel('MSE')
@@ -75,9 +75,7 @@ def plot_distribution(errors, labels):
 
     # Set logarithmic scale and x-axis limits
     plt.xscale('log')
-    xmin = np.min(sorted_all_errors_combined)
-    xmax = np.max(sorted_all_errors_combined) + 10  # Extend the x-axis limit as needed
-    plt.xlim(xmin, xmax)
+    # plt.xlim(1000, 100000)
 
     plt.grid(True)
     plt.savefig('distribution.png', bbox_inches='tight')
